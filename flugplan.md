@@ -9,6 +9,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Runway select fields in departure and arrival panels, populated from the selected airport with runway name and orientation
 - Airplane select field in its own panel
 - VOR station input field with dropdown suggestions and keyboard selection
+- Selected and typed values in airport, runway, airplane, and VOR controls are persisted in browser localStorage and restored on reload
 - Map panel with a schematic 2D map (no map tiles)
 - Schematic map shows selected departure and arrival airports and can highlight a selected VOR station
 - Map caption shows route heading direction
@@ -39,6 +40,7 @@ flugplan/
 - All code is in a single HTML file for simplicity
 - Layout is intentionally minimal; avoid adding behavior unless explicitly requested
 - JavaScript is embedded in `<script>` tag at bottom
+- Browser localStorage is used to remember current control values across page reloads
 - Keep markdown updated whenever HTML, requirements, or instructions change
 
 ## UI Notes
@@ -48,6 +50,7 @@ flugplan/
 - VOR input uses a custom suggestion list generated from the VOR data
 - Each VOR suggestion is a single combined entry in the form `CODE - Name`
 - VOR suggestions support typing either station code or human-readable name
+- Airport, runway, airplane, and VOR control values are restored from localStorage when the page reloads
 - Output map is schematic SVG based on airport and VOR coordinates; no real map tiles are used
 - Altitude profile is a schematic SVG derived from selected airports and airplane performance
 - Climb-end and descent-start are indicated on the x-axis without text labels
@@ -104,6 +107,7 @@ Current runway source: runway identifiers and available heading data for LSMD, L
 - Current outputs: Map and Altitude Profile are schematic SVGs; the map updates from selected departure/arrival airports and optional VOR, and the altitude profile updates from selected departure/arrival airports and airplane.
 - Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
 - VOR input resolves exact known station values (`CODE`, full name, or `CODE - Name`) for selection/highlighting.
+- Current control values persist in browser localStorage and are restored during initialization when valid.
 
 ## Planned Features
 Document future features here as we build them.

@@ -226,6 +226,17 @@
         ];
 
         const airplaneSelect = document.getElementById('airplane');
+        const departureRunwaySelect = document.getElementById('departure-runway');
+        const arrivalRunwaySelect = document.getElementById('arrival-runway');
+        const persistedControlIds = [
+            'departure-airport',
+            'departure-runway',
+            'arrival-airport',
+            'arrival-runway',
+            'airplane',
+            'vor-station'
+        ];
+        const storageKeyPrefix = 'flugplan:';
 
         airplanes.forEach((airplane) => {
             const option = document.createElement('option');
@@ -234,8 +245,72 @@
             airplaneSelect.appendChild(option);
         });
 
+        function getStorageKey(controlId) {
+            return `${storageKeyPrefix}${controlId}`;
+        }
+
+        function saveControlValue(controlId, value) {
+            try {
+                window.localStorage.setItem(getStorageKey(controlId), value);
+            } catch (error) {
+                // Ignore storage failures so the page keeps working without persistence.
+            }
+        }
+
+        function loadControlValue(controlId) {
+            try {
+                return window.localStorage.getItem(getStorageKey(controlId));
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function setSelectValueIfAvailable(selectElement, value) {
+            if (!value) {
+                selectElement.value = '';
+                return;
+            }
+
+            const hasMatchingOption = Array.from(selectElement.options).some((option) => option.value === value);
+            selectElement.value = hasMatchingOption ? value : '';
+        }
+
+        function persistCurrentControlValues() {
+            persistedControlIds.forEach((controlId) => {
+                const control = document.getElementById(controlId);
+                saveControlValue(controlId, control.value);
+            });
+        }
+
+        function restorePersistedState() {
+            const departureAirportInput = document.getElementById('departure-airport');
+            const arrivalAirportInput = document.getElementById('arrival-airport');
+            const vorStationInput = document.getElementById('vor-station');
+            const savedDepartureRunway = loadControlValue('departure-runway') || '';
+            const savedArrivalRunway = loadControlValue('arrival-runway') || '';
+
+            departureAirportInput.value = loadControlValue('departure-airport') || '';
+            arrivalAirportInput.value = loadControlValue('arrival-airport') || '';
+            vorStationInput.value = loadControlValue('vor-station') || '';
+            setSelectValueIfAvailable(airplaneSelect, loadControlValue('airplane') || '');
+
+            populateRunwaySelect('departure-airport', 'departure-runway', savedDepartureRunway);
+            populateRunwaySelect('arrival-airport', 'arrival-runway', savedArrivalRunway);
+
+            persistCurrentControlValues();
+        }
+
         airplaneSelect.addEventListener('change', () => {
             renderAltitudeProfile();
+            saveControlValue('airplane', airplaneSelect.value);
+        });
+
+        departureRunwaySelect.addEventListener('change', () => {
+            saveControlValue('departure-runway', departureRunwaySelect.value);
+        });
+
+        arrivalRunwaySelect.addEventListener('change', () => {
+            saveControlValue('arrival-runway', arrivalRunwaySelect.value);
         });
 
         function formatAirport(airport) {
@@ -624,10 +699,11 @@
             caption.textContent = `Arrival ${arrival.code} shown. Select a departure airport to complete the route.`;
         }
 
-        function populateRunwaySelect(airportInputId, runwaySelectId) {
+        function populateRunwaySelect(airportInputId, runwaySelectId, preferredRunwayValue = null) {
             const airportInput = document.getElementById(airportInputId);
             const runwaySelect = document.getElementById(runwaySelectId);
             const airport = findAirport(airportInput.value);
+            const runwayValueToRestore = preferredRunwayValue !== null ? preferredRunwayValue : runwaySelect.value;
 
             runwaySelect.innerHTML = '';
 
@@ -637,6 +713,8 @@
             runwaySelect.appendChild(placeholder);
 
             if (!airport) {
+                runwaySelect.value = '';
+                saveControlValue(runwaySelectId, runwaySelect.value);
                 return;
             }
 
@@ -646,6 +724,9 @@
                 option.textContent = formatRunway(runway);
                 runwaySelect.appendChild(option);
             });
+
+            setSelectValueIfAvailable(runwaySelect, runwayValueToRestore);
+            saveControlValue(runwaySelectId, runwaySelect.value);
         }
 
         function setupAutocomplete(config) {
@@ -683,6 +764,7 @@
             function selectItem(item) {
                 input.value = formatItem(item);
                 hideSuggestions();
+                saveControlValue(inputId, input.value);
                 onSelect(item);
             }
 
@@ -725,6 +807,7 @@
 
             input.addEventListener('input', () => {
                 showSuggestions(input.value);
+                saveControlValue(inputId, input.value);
                 onInput();
             });
 
@@ -830,8 +913,7 @@
             }
         });
 
-        populateRunwaySelect('departure-airport', 'departure-runway');
-        populateRunwaySelect('arrival-airport', 'arrival-runway');
+        restorePersistedState();
         renderSchematicMap();
         renderAltitudeProfile();
     </script>
