@@ -287,18 +287,6 @@
             saveControlValue('arrival-runway', arrivalRunwaySelect.value);
         });
 
-        function formatAirport(airport) {
-            return `${airport.code} - ${airport.name}`;
-        }
-
-        function formatVor(vor) {
-            return `${vor.code} - ${vor.name}`;
-        }
-
-        function formatRunway(runway) {
-            return `${runway.name} (${runway.orientationDeg} deg)`;
-        }
-
         function getSelectedCruiseAltitudeFeetMsl() {
             const airplane = findAirplane(airplaneSelect.value);
             const parsedValue = Number.parseInt(cruiseAltitudeInput.value, 10);

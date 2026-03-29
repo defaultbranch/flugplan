@@ -128,11 +128,11 @@ Airport lookup note: airport details can be looked up on OurAirports under `http
 
 Current airport source: coordinates and field elevations for LSMD, LSZF, and LSZM were taken from OurAirports.
 
-Implementation note: airport records are declared in `airports.js` with JSDoc typedefs for airport and runway objects.
+Implementation note: airport records plus airport/runway formatting and airport lookup helpers are declared in `airports.js` with JSDoc typing.
 
-Implementation note: airplane records are declared in `airplanes.js` with JSDoc typedefs for airplane objects.
+Implementation note: airplane records plus airplane lookup helper are declared in `airplanes.js` with JSDoc typing.
 
-Implementation note: VOR records are declared in `vors.js` with JSDoc typedefs for VOR objects.
+Implementation note: VOR records plus VOR formatting and lookup helpers are declared in `vors.js` with JSDoc typing.
 
 Current runway source: runway identifiers and available heading data for LSMD, LSZF, and LSZM were taken from OurAirports runways data.
 

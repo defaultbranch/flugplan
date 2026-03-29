@@ -38,6 +38,16 @@ const vors = [
 ];
 
 /**
+ * Format a VOR station into the UI display value.
+ *
+ * @param {Vor} vor
+ * @returns {string}
+ */
+function formatVor(vor) {
+    return `${vor.code} - ${vor.name}`;
+}
+
+/**
  * Resolve a VOR from free-form user input.
  *
  * Matching rules are exact (case-insensitive) against:
@@ -56,7 +66,7 @@ function findVor(value) {
     }
 
     return vors.find((vor) => {
-        const formatted = `${vor.code} - ${vor.name}`.toLowerCase();
+        const formatted = formatVor(vor).toLowerCase();
         return vor.code.toLowerCase() === normalized
             || vor.name.toLowerCase() === normalized
             || formatted === normalized;

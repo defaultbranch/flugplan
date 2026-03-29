@@ -82,6 +82,26 @@ const airports = [
 ];
 
 /**
+ * Format an airport into the UI display value.
+ *
+ * @param {Airport} airport
+ * @returns {string}
+ */
+function formatAirport(airport) {
+    return `${airport.code} - ${airport.name}`;
+}
+
+/**
+ * Format a runway into the UI display value.
+ *
+ * @param {Runway} runway
+ * @returns {string}
+ */
+function formatRunway(runway) {
+    return `${runway.name} (${runway.orientationDeg} deg)`;
+}
+
+/**
  * Resolve an airport from free-form user input.
  *
  * Matching rules are exact (case-insensitive) against:
@@ -100,7 +120,7 @@ function findAirport(value) {
     }
 
     return airports.find((airport) => {
-        const formatted = `${airport.code} - ${airport.name}`.toLowerCase();
+        const formatted = formatAirport(airport).toLowerCase();
         return airport.code.toLowerCase() === normalized
             || airport.name.toLowerCase() === normalized
             || formatted === normalized;
