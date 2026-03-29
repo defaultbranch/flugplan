@@ -80,3 +80,29 @@ const airports = [
         ]
     }
 ];
+
+/**
+ * Resolve an airport from free-form user input.
+ *
+ * Matching rules are exact (case-insensitive) against:
+ * - ICAO code (`LSMD`)
+ * - Human-readable airport name (`Duebendorf`)
+ * - Combined display value (`LSMD - Duebendorf`)
+ *
+ * @param {string} value
+ * @returns {Airport | null}
+ */
+function findAirport(value) {
+    const normalized = value.trim().toLowerCase();
+
+    if (!normalized) {
+        return null;
+    }
+
+    return airports.find((airport) => {
+        const formatted = `${airport.code} - ${airport.name}`.toLowerCase();
+        return airport.code.toLowerCase() === normalized
+            || airport.name.toLowerCase() === normalized
+            || formatted === normalized;
+    }) || null;
+}

@@ -299,21 +299,6 @@
             return `${runway.name} (${runway.orientationDeg} deg)`;
         }
 
-        function findAirport(value) {
-            const normalized = value.trim().toLowerCase();
-
-            if (!normalized) {
-                return null;
-            }
-
-            return airports.find((airport) => {
-                const formatted = formatAirport(airport).toLowerCase();
-                return airport.code.toLowerCase() === normalized
-                    || airport.name.toLowerCase() === normalized
-                    || formatted === normalized;
-            }) || null;
-        }
-
         function findVor(value) {
             const normalized = value.trim().toLowerCase();
 
