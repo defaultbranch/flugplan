@@ -79,7 +79,7 @@
 
         .output-profile {
             border: 1px solid #ccc;
-            height: 240px;
+            height: 280px;
             width: 100%;
         }
 
@@ -166,7 +166,7 @@
         <section class="panel output-panel">
             <h2>Altitude Profile</h2>
 
-            <svg id="altitude-profile" class="output-profile" viewBox="0 0 360 240" aria-label="Altitude over distance"></svg>
+            <svg id="altitude-profile" class="output-profile" viewBox="0 0 360 280" aria-label="Altitude over distance"></svg>
             <p class="map-caption" id="altitude-caption">Select departure, arrival, airplane, and cruise altitude to display altitude profile.</p>
         </section>
     </div>
@@ -435,6 +435,7 @@
             const departure = findAirport(document.getElementById('departure-airport').value);
             const arrival = findAirport(document.getElementById('arrival-airport').value);
             const airplane = findAirplane(airplaneSelect.value);
+            const selectedVor = findVor(document.getElementById('vor-station').value);
             const selectedCruiseAltitudeFeetMsl = getSelectedCruiseAltitudeFeetMsl();
 
             while (profile.firstChild) {
@@ -442,11 +443,11 @@
             }
 
             const width = 360;
-            const height = 240;
+            const height = 280;
             const marginLeft = 42;
             const marginRight = 14;
             const marginTop = 16;
-            const marginBottom = 32;
+            const marginBottom = 64;
             const plotWidth = width - marginLeft - marginRight;
             const plotHeight = height - marginTop - marginBottom;
 
@@ -592,22 +593,169 @@
             descentTick.setAttribute('stroke-width', '2');
             profile.appendChild(descentTick);
 
-            const labels = [
-                { text: '0 mi', x: xToPixel(0), y: height - 10 },
-                { text: `${totalDistanceMiles.toFixed(1)} mi`, x: xToPixel(totalDistanceMiles), y: height - 10 },
+            function interpolateRoutePoint(distanceMiles) {
+                if (totalDistanceMiles <= 0) {
+                    return {
+                        latitude: departure.latitude,
+                        longitude: departure.longitude
+                    };
+                }
+
+                const clampedDistance = Math.max(0, Math.min(totalDistanceMiles, distanceMiles));
+                const progress = clampedDistance / totalDistanceMiles;
+
+                return {
+                    latitude: departure.latitude + (arrival.latitude - departure.latitude) * progress,
+                    longitude: departure.longitude + (arrival.longitude - departure.longitude) * progress
+                };
+            }
+
+            function estimateLabelWidth(text) {
+                return text.length * 5.5;
+            }
+
+            function getLabelBounds(labelData) {
+                const widthEstimate = estimateLabelWidth(labelData.text);
+
+                if (labelData.anchor === 'start') {
+                    return { minX: labelData.x, maxX: labelData.x + widthEstimate };
+                }
+
+                if (labelData.anchor === 'end') {
+                    return { minX: labelData.x - widthEstimate, maxX: labelData.x };
+                }
+
+                return {
+                    minX: labelData.x - widthEstimate / 2,
+                    maxX: labelData.x + widthEstimate / 2
+                };
+            }
+
+            function canPlaceLabel(labelData, occupiedRanges) {
+                const bounds = getLabelBounds(labelData);
+
+                if (bounds.minX < marginLeft || bounds.maxX > width - marginRight) {
+                    return false;
+                }
+
+                return !occupiedRanges.some((range) => {
+                    return bounds.minX < range.maxX && bounds.maxX > range.minX;
+                });
+            }
+
+            function recordLabel(labelData, occupiedRanges) {
+                occupiedRanges.push(getLabelBounds(labelData));
+            }
+
+            function appendTextLabel(labelData) {
+                const label = createSvgElement('text');
+                label.setAttribute('x', String(labelData.x));
+                label.setAttribute('y', String(labelData.y));
+                label.setAttribute('font-size', String(labelData.fontSize || 10));
+                label.setAttribute('fill', labelData.fill || '#333');
+
+                if (labelData.anchor) {
+                    label.setAttribute('text-anchor', labelData.anchor);
+                }
+
+                label.textContent = labelData.text;
+                profile.appendChild(label);
+            }
+
+            const routeDistanceLabels = [
+                {
+                    text: '0 mi',
+                    x: xToPixel(0),
+                    y: height - 26,
+                    anchor: 'start'
+                },
+                {
+                    text: `Climb ${climbEndMiles.toFixed(1)} mi`,
+                    x: xToPixel(climbEndMiles),
+                    y: height - 26,
+                    anchor: 'middle',
+                    fill: '#1b9e77'
+                },
+                {
+                    text: `Descent ${descentStartMiles.toFixed(1)} mi`,
+                    x: xToPixel(descentStartMiles),
+                    y: height - 26,
+                    anchor: 'middle',
+                    fill: '#d95f02'
+                },
+                {
+                    text: `${totalDistanceMiles.toFixed(1)} mi`,
+                    x: xToPixel(totalDistanceMiles),
+                    y: height - 26,
+                    anchor: 'end'
+                }
+            ];
+            const routeDistanceLabelRanges = [];
+
+            routeDistanceLabels.forEach((labelData, index) => {
+                const isRequiredEdgeLabel = index === 0 || index === routeDistanceLabels.length - 1;
+
+                if (isRequiredEdgeLabel || canPlaceLabel(labelData, routeDistanceLabelRanges)) {
+                    appendTextLabel(labelData);
+                    recordLabel(labelData, routeDistanceLabelRanges);
+                }
+            });
+
+            const altitudeLabels = [
                 { text: `${Math.round(yMin)} ft`, x: 6, y: yToPixel(yMin) + 4 },
                 { text: `${Math.round(yMax)} ft`, x: 6, y: yToPixel(yMax) + 4 }
             ];
 
-            labels.forEach((labelData) => {
-                const label = createSvgElement('text');
-                label.setAttribute('x', String(labelData.x));
-                label.setAttribute('y', String(labelData.y));
-                label.setAttribute('font-size', '10');
-                label.setAttribute('fill', '#333');
-                label.textContent = labelData.text;
-                profile.appendChild(label);
+            altitudeLabels.forEach((labelData) => {
+                appendTextLabel(labelData);
             });
+
+            if (selectedVor) {
+                const phasePointDistances = [0, climbEndMiles, descentStartMiles, totalDistanceMiles];
+                const mergedPhasePointDistances = [];
+
+                phasePointDistances.forEach((miles) => {
+                    const hasNearDuplicate = mergedPhasePointDistances.some((mergedMiles) => {
+                        return Math.abs(mergedMiles - miles) < 0.2;
+                    });
+
+                    if (!hasNearDuplicate) {
+                        mergedPhasePointDistances.push(miles);
+                    }
+                });
+
+                const vorLabelRanges = [];
+                mergedPhasePointDistances
+                    .sort((left, right) => left - right)
+                    .forEach((phaseMiles) => {
+                        const routePoint = interpolateRoutePoint(phaseMiles);
+                        const vorDistanceMiles = calculateDistanceMiles(routePoint, selectedVor);
+                        const nearStart = phaseMiles <= totalDistanceMiles * 0.05;
+                        const nearEnd = phaseMiles >= totalDistanceMiles * 0.95;
+                        const labelData = {
+                            text: `${vorDistanceMiles.toFixed(1)} mi`,
+                            x: xToPixel(phaseMiles),
+                            y: height - 10,
+                            anchor: nearStart ? 'start' : (nearEnd ? 'end' : 'middle'),
+                            fill: '#7a3e9d',
+                            fontSize: 9
+                        };
+
+                        if (canPlaceLabel(labelData, vorLabelRanges)) {
+                            const vorTick = createSvgElement('line');
+                            vorTick.setAttribute('x1', String(xToPixel(phaseMiles)));
+                            vorTick.setAttribute('y1', String(height - marginBottom));
+                            vorTick.setAttribute('x2', String(xToPixel(phaseMiles)));
+                            vorTick.setAttribute('y2', String(height - marginBottom + 5));
+                            vorTick.setAttribute('stroke', '#7a3e9d');
+                            vorTick.setAttribute('stroke-width', '1.5');
+                            profile.appendChild(vorTick);
+
+                            appendTextLabel(labelData);
+                            recordLabel(labelData, vorLabelRanges);
+                        }
+                    });
+            }
 
             const profilePhaseText = hasCruiseSegment
                 ? `Cruise ${Math.round(peakAltitude)} ft MSL.`
@@ -964,9 +1112,11 @@
             },
             onSelect: () => {
                 renderSchematicMap();
+                renderAltitudeProfile();
             },
             onInput: () => {
                 renderSchematicMap();
+                renderAltitudeProfile();
             }
         });
 
