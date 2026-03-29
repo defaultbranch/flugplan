@@ -470,33 +470,50 @@
             const totalDistanceMiles = calculateDistanceMiles(departure, arrival);
             const climbRate = airplane.nominalClimbRateFeetPerMinute;
             const descentRate = Math.abs(airplane.nominalDescentRateFeetPerMinute);
-            const targetCruiseAltitude = Math.max(
+            const requestedCruiseAltitude = Math.max(
                 selectedCruiseAltitudeFeetMsl,
                 departure.altitudeFeetMsl,
                 arrival.altitudeFeetMsl
             );
-
-            const climbDelta = Math.max(0, targetCruiseAltitude - departure.altitudeFeetMsl);
-            const descentDelta = Math.max(0, targetCruiseAltitude - arrival.altitudeFeetMsl);
-            const climbMinutes = climbRate > 0 ? climbDelta / climbRate : 0;
-            const descentMinutes = descentRate > 0 ? descentDelta / descentRate : 0;
             const climbSpeedMph = airplane.climbSpeedKts * 1.15078;
             const descentSpeedMph = airplane.descentSpeedKts * 1.15078;
-            let climbDistance = (climbMinutes / 60) * climbSpeedMph;
-            let descentDistance = (descentMinutes / 60) * descentSpeedMph;
+            const climbFeetPerMile = climbRate > 0 && climbSpeedMph > 0
+                ? (climbRate * 60) / climbSpeedMph
+                : 0;
+            const descentFeetPerMile = descentRate > 0 && descentSpeedMph > 0
+                ? (descentRate * 60) / descentSpeedMph
+                : 0;
 
-            const nonCruiseDistance = climbDistance + descentDistance;
-            if (nonCruiseDistance > 0 && nonCruiseDistance > totalDistanceMiles) {
-                const factor = totalDistanceMiles / nonCruiseDistance;
-                climbDistance *= factor;
-                descentDistance *= factor;
+            const climbDelta = Math.max(0, requestedCruiseAltitude - departure.altitudeFeetMsl);
+            const descentDelta = Math.max(0, requestedCruiseAltitude - arrival.altitudeFeetMsl);
+            const climbDistance = climbFeetPerMile > 0 ? climbDelta / climbFeetPerMile : 0;
+            const descentDistance = descentFeetPerMile > 0 ? descentDelta / descentFeetPerMile : 0;
+
+            let peakAltitude = requestedCruiseAltitude;
+            let climbEndMiles = Math.max(0, Math.min(totalDistanceMiles, climbDistance));
+            let descentStartMiles = Math.max(climbEndMiles, totalDistanceMiles - descentDistance);
+            let hasCruiseSegment = climbDistance + descentDistance <= totalDistanceMiles;
+
+            if (!hasCruiseSegment) {
+                if (climbFeetPerMile > 0 && descentFeetPerMile > 0) {
+                    const intersectionMiles = (
+                        arrival.altitudeFeetMsl
+                        + totalDistanceMiles * descentFeetPerMile
+                        - departure.altitudeFeetMsl
+                    ) / (climbFeetPerMile + descentFeetPerMile);
+                    const transitionMiles = Math.max(0, Math.min(totalDistanceMiles, intersectionMiles));
+                    climbEndMiles = transitionMiles;
+                    descentStartMiles = transitionMiles;
+                    peakAltitude = departure.altitudeFeetMsl + transitionMiles * climbFeetPerMile;
+                } else {
+                    peakAltitude = Math.max(departure.altitudeFeetMsl, arrival.altitudeFeetMsl);
+                    climbEndMiles = 0;
+                    descentStartMiles = totalDistanceMiles;
+                }
             }
 
-            const climbEndMiles = Math.max(0, Math.min(totalDistanceMiles, climbDistance));
-            const descentStartMiles = Math.max(climbEndMiles, totalDistanceMiles - descentDistance);
-
             const minAltitude = Math.min(departure.altitudeFeetMsl, arrival.altitudeFeetMsl);
-            const maxAltitude = Math.max(targetCruiseAltitude, departure.altitudeFeetMsl, arrival.altitudeFeetMsl);
+            const maxAltitude = Math.max(peakAltitude, departure.altitudeFeetMsl, arrival.altitudeFeetMsl);
             const altitudePadding = Math.max(300, (maxAltitude - minAltitude) * 0.1);
             const yMin = Math.max(0, minAltitude - altitudePadding);
             const yMax = maxAltitude + altitudePadding;
@@ -529,8 +546,8 @@
             const profileLine = createSvgElement('polyline');
             const points = [
                 `${xToPixel(0)},${yToPixel(departure.altitudeFeetMsl)}`,
-                `${xToPixel(climbEndMiles)},${yToPixel(targetCruiseAltitude)}`,
-                `${xToPixel(descentStartMiles)},${yToPixel(targetCruiseAltitude)}`,
+                `${xToPixel(climbEndMiles)},${yToPixel(peakAltitude)}`,
+                `${xToPixel(descentStartMiles)},${yToPixel(peakAltitude)}`,
                 `${xToPixel(totalDistanceMiles)},${yToPixel(arrival.altitudeFeetMsl)}`
             ].join(' ');
             profileLine.setAttribute('points', points);
@@ -592,7 +609,10 @@
                 profile.appendChild(label);
             });
 
-            caption.textContent = `${departure.code} to ${arrival.code}: ${totalDistanceMiles.toFixed(1)} miles. Cruise ${Math.round(targetCruiseAltitude)} ft MSL.`;
+            const profilePhaseText = hasCruiseSegment
+                ? `Cruise ${Math.round(peakAltitude)} ft MSL.`
+                : `Peak ${Math.round(peakAltitude)} ft MSL; requested cruise altitude not reached.`;
+            caption.textContent = `${departure.code} to ${arrival.code}: ${totalDistanceMiles.toFixed(1)} miles. ${profilePhaseText}`;
         }
 
         function renderSchematicMap() {

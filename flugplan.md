@@ -15,7 +15,8 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Map caption shows route heading direction
 - Altitude profile panel with altitude-over-distance chart
 - Altitude chart uses miles on x-axis and feet MSL on y-axis
-- Altitude chart ceilings at the selected cruise altitude, bounded by departure and arrival field elevation when necessary
+- Altitude chart ceilings at the selected cruise altitude when reachable, bounded by departure and arrival field elevation when necessary
+- If the requested cruise altitude cannot be reached before descent must begin, the profile peaks at the climb-to-descent transition instead of forcing a cruise segment
 - Altitude chart includes vertical bars for climb end and descent start, with x-axis indicators
 - Plain JavaScript data section
 - Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, altitude in feet MSL, and runway objects
@@ -55,6 +56,7 @@ flugplan/
 - Airport, runway, airplane, cruise altitude, and VOR control values are restored from localStorage when the page reloads
 - Output map is schematic SVG based on airport and VOR coordinates; no real map tiles are used
 - Altitude profile is a schematic SVG derived from selected airports, airplane performance, and the current cruise altitude input
+- Climb and descent segments keep the airplane's configured climb and descent rates; when cruise is impossible on the available distance, those segments meet directly at the peak altitude
 - Climb-end and descent-start are indicated on the x-axis without text labels
 - Airport inputs use custom suggestion lists generated from the airport data
 - Each airport suggestion is a single combined entry in the form `ICAO - Name`
@@ -112,7 +114,7 @@ Current runway source: runway identifiers and available heading data for LSMD, L
 ## Next Session Handoff
 - Keep markdown updated whenever HTML, requirements, or instructions change.
 - Current outputs: Map and Altitude Profile are schematic SVGs; the map updates from selected departure/arrival airports and optional VOR, and the altitude profile updates from selected departure/arrival airports and airplane.
-- The altitude profile uses the current cruise altitude input as its target ceiling, subject to departure/arrival field elevation.
+- The altitude profile uses the current cruise altitude input as its target ceiling when reachable; otherwise it peaks where fixed-rate climb transitions directly into fixed-rate descent.
 - Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
 - VOR input resolves exact known station values (`CODE`, full name, or `CODE - Name`) for selection/highlighting.
 - Current control values persist in browser localStorage and are restored during initialization when valid, including cruise altitude.
