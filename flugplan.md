@@ -8,7 +8,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Airport input field in each panel with dropdown suggestions while typing and keyboard selection
 - Runway select field in each panel
 - Plain JavaScript data section
-- Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield)
+- Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, and altitude in feet MSL
 - VOR station data (ZURICH EAST, KLOTEN, WILLISAU) with code, frequency, latitude, and longitude
 
 ## Technology Stack
@@ -68,6 +68,8 @@ flugplan/
 VOR lookup note: coordinates can be looked up on OpenNav under `https://opennav.com/navaid/`; search for the navaid page for the station identifier/name there. The page shows latitude/longitude in DMS and also exposes decimal coordinates in the embedded map link.
 
 Airport lookup note: airport details can be looked up on OurAirports under `https://ourairports.com/airports/<ICAO>/`.
+
+Current airport source: coordinates and field elevations for LSMD, LSZF, and LSZM were taken from OurAirports.
 
 ## Planned Features
 Document future features here as we build them.
