@@ -299,10 +299,6 @@
             return `${runway.name} (${runway.orientationDeg} deg)`;
         }
 
-        function findAirplane(value) {
-            return airplanes.find((airplane) => airplane.name === value) || null;
-        }
-
         function getSelectedCruiseAltitudeFeetMsl() {
             const airplane = findAirplane(airplaneSelect.value);
             const parsedValue = Number.parseInt(cruiseAltitudeInput.value, 10);

@@ -45,3 +45,16 @@ const airplanes = [
         descentSpeedKts: 105
     }
 ];
+
+/**
+ * Resolve an airplane from the selected UI value.
+ *
+ * Matching is exact by airplane name because the current UI uses a select
+ * control whose option values are airplane names.
+ *
+ * @param {string} value
+ * @returns {Airplane | null}
+ */
+function findAirplane(value) {
+    return airplanes.find((airplane) => airplane.name === value) || null;
+}
