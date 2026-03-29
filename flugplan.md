@@ -20,7 +20,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Altitude chart includes vertical bars for climb end and descent start, with x-axis indicators
 - Altitude chart x-axis shows selected-VOR distance annotations at takeoff, climb-end, descent-start, and landing points, and can also show climb/descent distance labels when space permits
 - Altitude profile caption includes an estimated total flight time derived from climb, cruise, and descent speeds/distances
-- Plain JavaScript data section
+- Plain JavaScript data sections, with airport data loaded from a dedicated script file
 - Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, altitude in feet MSL, and runway objects
 - Airplane data with one entry (Cessna 172P Skyhawk) including climb, cruise, and descent performance
 - VOR station data (ZURICH EAST, KLOTEN, WILLISAU) with code, frequency, latitude, and longitude
@@ -32,6 +32,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 ## Project Structure
 ```
 flugplan/
+├── airports.js       # Airport dataset with JSDoc typedefs
 ├── flugplan.html     # Single page application
 └── flugplan.md       # This documentation
 ```
@@ -41,7 +42,7 @@ flugplan/
 2. No server needed - fully static
 
 ## Development Notes
-- All code is in a single HTML file for simplicity
+- Airport data lives in `airports.js`; the application logic remains embedded in `flugplan.html`
 - Layout is intentionally minimal; avoid adding behavior unless explicitly requested
 - JavaScript is embedded in `<script>` tag at bottom
 - Browser localStorage is used to remember current control values across page reloads
@@ -122,6 +123,8 @@ VOR lookup note: coordinates can be looked up on OpenNav under `https://opennav.
 Airport lookup note: airport details can be looked up on OurAirports under `https://ourairports.com/airports/<ICAO>/`.
 
 Current airport source: coordinates and field elevations for LSMD, LSZF, and LSZM were taken from OurAirports.
+
+Implementation note: airport records are declared in `airports.js` with JSDoc typedefs for airport and runway objects.
 
 Current runway source: runway identifiers and available heading data for LSMD, LSZF, and LSZM were taken from OurAirports runways data.
 
