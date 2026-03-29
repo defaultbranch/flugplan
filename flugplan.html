@@ -137,6 +137,11 @@
                     <option value="">Select airplane</option>
                 </select>
             </div>
+
+            <div class="field">
+                <label for="cruise-altitude-feet-msl">Cruise Altitude (ft MSL)</label>
+                <input id="cruise-altitude-feet-msl" name="cruise-altitude-feet-msl" type="number" min="0" step="100" inputmode="numeric">
+            </div>
         </section>
 
         <section class="panel">
@@ -162,7 +167,7 @@
             <h2>Altitude Profile</h2>
 
             <svg id="altitude-profile" class="output-profile" viewBox="0 0 360 240" aria-label="Altitude over distance"></svg>
-            <p class="map-caption" id="altitude-caption">Select departure, arrival, and airplane to display altitude profile.</p>
+            <p class="map-caption" id="altitude-caption">Select departure, arrival, airplane, and cruise altitude to display altitude profile.</p>
         </section>
     </div>
 
@@ -226,6 +231,7 @@
         ];
 
         const airplaneSelect = document.getElementById('airplane');
+        const cruiseAltitudeInput = document.getElementById('cruise-altitude-feet-msl');
         const departureRunwaySelect = document.getElementById('departure-runway');
         const arrivalRunwaySelect = document.getElementById('arrival-runway');
         const persistedControlIds = [
@@ -234,6 +240,7 @@
             'arrival-airport',
             'arrival-runway',
             'airplane',
+            'cruise-altitude-feet-msl',
             'vor-station'
         ];
         const storageKeyPrefix = 'flugplan:';
@@ -288,21 +295,39 @@
             const vorStationInput = document.getElementById('vor-station');
             const savedDepartureRunway = loadControlValue('departure-runway') || '';
             const savedArrivalRunway = loadControlValue('arrival-runway') || '';
+            const savedCruiseAltitude = loadControlValue('cruise-altitude-feet-msl');
 
             departureAirportInput.value = loadControlValue('departure-airport') || '';
             arrivalAirportInput.value = loadControlValue('arrival-airport') || '';
             vorStationInput.value = loadControlValue('vor-station') || '';
             setSelectValueIfAvailable(airplaneSelect, loadControlValue('airplane') || '');
+            cruiseAltitudeInput.value = savedCruiseAltitude || '';
 
             populateRunwaySelect('departure-airport', 'departure-runway', savedDepartureRunway);
             populateRunwaySelect('arrival-airport', 'arrival-runway', savedArrivalRunway);
 
+            if (!savedCruiseAltitude) {
+                applySelectedAirplaneCruiseAltitude();
+            }
+
             persistCurrentControlValues();
         }
 
+        function applySelectedAirplaneCruiseAltitude() {
+            const airplane = findAirplane(airplaneSelect.value);
+            cruiseAltitudeInput.value = airplane ? String(airplane.nominalCruiseAltitudeFeetMsl) : '';
+            saveControlValue('cruise-altitude-feet-msl', cruiseAltitudeInput.value);
+        }
+
         airplaneSelect.addEventListener('change', () => {
+            applySelectedAirplaneCruiseAltitude();
             renderAltitudeProfile();
             saveControlValue('airplane', airplaneSelect.value);
+        });
+
+        cruiseAltitudeInput.addEventListener('input', () => {
+            saveControlValue('cruise-altitude-feet-msl', cruiseAltitudeInput.value);
+            renderAltitudeProfile();
         });
 
         departureRunwaySelect.addEventListener('change', () => {
@@ -359,6 +384,17 @@
             return airplanes.find((airplane) => airplane.name === value) || null;
         }
 
+        function getSelectedCruiseAltitudeFeetMsl() {
+            const airplane = findAirplane(airplaneSelect.value);
+            const parsedValue = Number.parseInt(cruiseAltitudeInput.value, 10);
+
+            if (Number.isFinite(parsedValue) && parsedValue >= 0) {
+                return parsedValue;
+            }
+
+            return airplane ? airplane.nominalCruiseAltitudeFeetMsl : null;
+        }
+
         function calculateDistanceMiles(fromAirport, toAirport) {
             const toRad = Math.PI / 180;
             const earthRadiusMiles = 3958.7613;
@@ -399,6 +435,7 @@
             const departure = findAirport(document.getElementById('departure-airport').value);
             const arrival = findAirport(document.getElementById('arrival-airport').value);
             const airplane = findAirplane(airplaneSelect.value);
+            const selectedCruiseAltitudeFeetMsl = getSelectedCruiseAltitudeFeetMsl();
 
             while (profile.firstChild) {
                 profile.removeChild(profile.firstChild);
@@ -425,8 +462,8 @@
             background.setAttribute('fill', '#fafafa');
             profile.appendChild(background);
 
-            if (!departure || !arrival || !airplane) {
-                caption.textContent = 'Select departure, arrival, and airplane to display altitude profile.';
+            if (!departure || !arrival || !airplane || selectedCruiseAltitudeFeetMsl === null) {
+                caption.textContent = 'Select departure, arrival, airplane, and cruise altitude to display altitude profile.';
                 return;
             }
 
@@ -434,7 +471,7 @@
             const climbRate = airplane.nominalClimbRateFeetPerMinute;
             const descentRate = Math.abs(airplane.nominalDescentRateFeetPerMinute);
             const targetCruiseAltitude = Math.max(
-                airplane.nominalCruiseAltitudeFeetMsl,
+                selectedCruiseAltitudeFeetMsl,
                 departure.altitudeFeetMsl,
                 arrival.altitudeFeetMsl
             );
@@ -555,7 +592,7 @@
                 profile.appendChild(label);
             });
 
-            caption.textContent = `${departure.code} to ${arrival.code}: ${totalDistanceMiles.toFixed(1)} miles.`;
+            caption.textContent = `${departure.code} to ${arrival.code}: ${totalDistanceMiles.toFixed(1)} miles. Cruise ${Math.round(targetCruiseAltitude)} ft MSL.`;
         }
 
         function renderSchematicMap() {

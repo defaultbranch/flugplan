@@ -7,14 +7,15 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Single-screen layout with departure, arrival, airplane, and VOR input panels; output panels below
 - Airport input fields in departure and arrival panels with dropdown suggestions and keyboard selection
 - Runway select fields in departure and arrival panels, populated from the selected airport with runway name and orientation
-- Airplane select field in its own panel
+- Airplane panel with airplane select field and editable cruise altitude input in feet MSL
 - VOR station input field with dropdown suggestions and keyboard selection
-- Selected and typed values in airport, runway, airplane, and VOR controls are persisted in browser localStorage and restored on reload
+- Selected and typed values in airport, runway, airplane, cruise altitude, and VOR controls are persisted in browser localStorage and restored on reload
 - Map panel with a schematic 2D map (no map tiles)
 - Schematic map shows selected departure and arrival airports and can highlight a selected VOR station
 - Map caption shows route heading direction
 - Altitude profile panel with altitude-over-distance chart
 - Altitude chart uses miles on x-axis and feet MSL on y-axis
+- Altitude chart ceilings at the selected cruise altitude, bounded by departure and arrival field elevation when necessary
 - Altitude chart includes vertical bars for climb end and descent start, with x-axis indicators
 - Plain JavaScript data section
 - Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, altitude in feet MSL, and runway objects
@@ -44,15 +45,16 @@ flugplan/
 - Keep markdown updated whenever HTML, requirements, or instructions change
 
 ## UI Notes
-- Departure, arrival, airplane, and VOR are in the top input row/grid; map and altitude profile are side by side below
+- Departure, arrival, airplane, and VOR are in the top input row/grid; the airplane panel contains airplane selection plus an editable cruise altitude field; map and altitude profile are side by side below
 - Runway selects populate automatically when a known airport is selected or typed exactly
 - Airplane select is populated from the airplane data array
+- Selecting an airplane overwrites the cruise altitude field with that airplane's nominal cruise altitude, but the value can still be edited manually
 - VOR input uses a custom suggestion list generated from the VOR data
 - Each VOR suggestion is a single combined entry in the form `CODE - Name`
 - VOR suggestions support typing either station code or human-readable name
-- Airport, runway, airplane, and VOR control values are restored from localStorage when the page reloads
+- Airport, runway, airplane, cruise altitude, and VOR control values are restored from localStorage when the page reloads
 - Output map is schematic SVG based on airport and VOR coordinates; no real map tiles are used
-- Altitude profile is a schematic SVG derived from selected airports and airplane performance
+- Altitude profile is a schematic SVG derived from selected airports, airplane performance, and the current cruise altitude input
 - Climb-end and descent-start are indicated on the x-axis without text labels
 - Airport inputs use custom suggestion lists generated from the airport data
 - Each airport suggestion is a single combined entry in the form `ICAO - Name`
@@ -88,6 +90,11 @@ flugplan/
 - **Nominal Descent Rate** - Feet per minute, negative for descent (e.g., `-500`)
 - **Descent Speed** - Knots (e.g., `105`)
 
+### Cruise Altitude Input
+- **Cruise Altitude** - User-editable target cruise altitude in feet MSL
+- **Default Source** - Overwritten from the selected airplane's nominal cruise altitude when airplane selection changes
+- **Persistence** - Stored in browser localStorage and restored on reload
+
 ### VOR (VHF Omnidirectional Range)
 - **Name** - Station name (e.g., "Kennedy VOR")
 - **Frequency** - VHF frequency in MHz (e.g., "110.5")
@@ -105,9 +112,10 @@ Current runway source: runway identifiers and available heading data for LSMD, L
 ## Next Session Handoff
 - Keep markdown updated whenever HTML, requirements, or instructions change.
 - Current outputs: Map and Altitude Profile are schematic SVGs; the map updates from selected departure/arrival airports and optional VOR, and the altitude profile updates from selected departure/arrival airports and airplane.
+- The altitude profile uses the current cruise altitude input as its target ceiling, subject to departure/arrival field elevation.
 - Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
 - VOR input resolves exact known station values (`CODE`, full name, or `CODE - Name`) for selection/highlighting.
-- Current control values persist in browser localStorage and are restored during initialization when valid.
+- Current control values persist in browser localStorage and are restored during initialization when valid, including cruise altitude.
 
 ## Planned Features
 Document future features here as we build them.
