@@ -4,12 +4,16 @@
 A single-page flight planning web application built with HTML, small inline CSS, and vanilla JavaScript. No frameworks or build tools required.
 
 ## Current Features
-- Single-screen layout with departure, arrival, and airplane input panels; output panel below
+- Single-screen layout with departure, arrival, and airplane input panels; output panels below
 - Airport input field in each panel with dropdown suggestions while typing and keyboard selection
 - Runway select field in each panel, populated from the selected airport with runway name and orientation
 - Airplane select field in its own panel
-- Output panel with a schematic 2D map (no map tiles)
+- Map panel with a schematic 2D map (no map tiles)
 - Schematic map shows selected departure and arrival airports
+- Map caption shows route heading direction
+- Altitude profile panel with altitude-over-distance chart
+- Altitude chart uses miles on x-axis and feet MSL on y-axis
+- Altitude chart includes vertical bars for climb end and descent start, with x-axis indicators
 - Plain JavaScript data section
 - Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, altitude in feet MSL, and runway objects
 - Airplane data with one entry (Cessna 172P Skyhawk) including climb, cruise, and descent performance
@@ -37,10 +41,12 @@ flugplan/
 - Keep markdown updated whenever HTML, requirements, or instructions change
 
 ## UI Notes
-- Departure, arrival, and airplane are in the top input row/grid; output is below to avoid cramped layout
+- Departure, arrival, and airplane are in the top input row/grid; map and altitude profile are side by side below
 - Runway selects populate automatically when a known airport is selected or typed exactly
 - Airplane select is populated from the airplane data array
 - Output map is schematic SVG based on airport coordinates; no real map tiles are used
+- Altitude profile is a schematic SVG derived from selected airports and airplane performance
+- Climb-end and descent-start are indicated on the x-axis without text labels
 - Airport inputs use custom suggestion lists generated from the airport data
 - Each airport suggestion is a single combined entry in the form `ICAO - Name`
 - Airport suggestions support typing either ICAO code or human-readable name
@@ -70,6 +76,7 @@ flugplan/
 - **Name** - Aircraft name (e.g., "Cessna 172P Skyhawk")
 - **Nominal Climb Rate** - Feet per minute (e.g., `500`)
 - **Climb Speed** - Knots (e.g., `75`)
+- **Nominal Cruise Altitude** - Feet MSL (e.g., `5000`)
 - **Cruise Speed** - Knots (e.g., `105`)
 - **Nominal Descent Rate** - Feet per minute, negative for descent (e.g., `-500`)
 - **Descent Speed** - Knots (e.g., `105`)

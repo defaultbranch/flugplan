@@ -20,6 +20,12 @@
             margin-top: 16px;
         }
 
+        .output-panels {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
         .panel {
             border: 1px solid #ccc;
             padding: 16px;
@@ -68,6 +74,12 @@
         .output-map {
             border: 1px solid #ccc;
             height: 220px;
+            width: 100%;
+        }
+
+        .output-profile {
+            border: 1px solid #ccc;
+            height: 240px;
             width: 100%;
         }
 
@@ -128,12 +140,21 @@
         </section>
     </div>
 
-    <section class="panel output-panel">
-        <h2>Output</h2>
+    <div class="output-panels">
+        <section class="panel output-panel">
+            <h2>Map</h2>
 
-        <svg id="schematic-map" class="output-map" viewBox="0 0 360 220" aria-label="Schematic route map"></svg>
-        <p class="map-caption" id="map-caption">Select departure and arrival airports to display them on the map.</p>
-    </section>
+            <svg id="schematic-map" class="output-map" viewBox="0 0 360 220" aria-label="Schematic route map"></svg>
+            <p class="map-caption" id="map-caption">Select departure and arrival airports to display them on the map.</p>
+        </section>
+
+        <section class="panel output-panel">
+            <h2>Altitude Profile</h2>
+
+            <svg id="altitude-profile" class="output-profile" viewBox="0 0 360 240" aria-label="Altitude over distance"></svg>
+            <p class="map-caption" id="altitude-caption">Select departure, arrival, and airplane to display altitude profile.</p>
+        </section>
+    </div>
 
     <script>
         const airports = [
@@ -181,6 +202,7 @@
                 name: 'Cessna 172P Skyhawk',
                 nominalClimbRateFeetPerMinute: 500,
                 climbSpeedKts: 75,
+                nominalCruiseAltitudeFeetMsl: 5000,
                 cruiseSpeedKts: 105,
                 nominalDescentRateFeetPerMinute: -500,
                 descentSpeedKts: 105
@@ -194,6 +216,10 @@
             option.value = airplane.name;
             option.textContent = airplane.name;
             airplaneSelect.appendChild(option);
+        });
+
+        airplaneSelect.addEventListener('change', () => {
+            renderAltitudeProfile();
         });
 
         function formatAirport(airport) {
@@ -217,6 +243,209 @@
                     || airport.name.toLowerCase() === normalized
                     || formatted === normalized;
             }) || null;
+        }
+
+        function findAirplane(value) {
+            return airplanes.find((airplane) => airplane.name === value) || null;
+        }
+
+        function calculateDistanceMiles(fromAirport, toAirport) {
+            const toRad = Math.PI / 180;
+            const earthRadiusMiles = 3958.7613;
+            const lat1 = fromAirport.latitude * toRad;
+            const lon1 = fromAirport.longitude * toRad;
+            const lat2 = toAirport.latitude * toRad;
+            const lon2 = toAirport.longitude * toRad;
+            const dLat = lat2 - lat1;
+            const dLon = lon2 - lon1;
+            const a = Math.sin(dLat / 2) ** 2
+                + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return earthRadiusMiles * c;
+        }
+
+        function calculateInitialHeadingDegrees(fromAirport, toAirport) {
+            const toRad = Math.PI / 180;
+            const toDeg = 180 / Math.PI;
+            const lat1 = fromAirport.latitude * toRad;
+            const lat2 = toAirport.latitude * toRad;
+            const dLon = (toAirport.longitude - fromAirport.longitude) * toRad;
+            const y = Math.sin(dLon) * Math.cos(lat2);
+            const x = Math.cos(lat1) * Math.sin(lat2)
+                - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+            const bearing = Math.atan2(y, x) * toDeg;
+            return (bearing + 360) % 360;
+        }
+
+        function headingToCardinal(headingDeg) {
+            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            const index = Math.round(headingDeg / 45) % 8;
+            return directions[index];
+        }
+
+        function renderAltitudeProfile() {
+            const profile = document.getElementById('altitude-profile');
+            const caption = document.getElementById('altitude-caption');
+            const departure = findAirport(document.getElementById('departure-airport').value);
+            const arrival = findAirport(document.getElementById('arrival-airport').value);
+            const airplane = findAirplane(airplaneSelect.value);
+
+            while (profile.firstChild) {
+                profile.removeChild(profile.firstChild);
+            }
+
+            const width = 360;
+            const height = 240;
+            const marginLeft = 42;
+            const marginRight = 14;
+            const marginTop = 16;
+            const marginBottom = 32;
+            const plotWidth = width - marginLeft - marginRight;
+            const plotHeight = height - marginTop - marginBottom;
+
+            function createSvgElement(name) {
+                return document.createElementNS('http://www.w3.org/2000/svg', name);
+            }
+
+            const background = createSvgElement('rect');
+            background.setAttribute('x', '0');
+            background.setAttribute('y', '0');
+            background.setAttribute('width', String(width));
+            background.setAttribute('height', String(height));
+            background.setAttribute('fill', '#fafafa');
+            profile.appendChild(background);
+
+            if (!departure || !arrival || !airplane) {
+                caption.textContent = 'Select departure, arrival, and airplane to display altitude profile.';
+                return;
+            }
+
+            const totalDistanceMiles = calculateDistanceMiles(departure, arrival);
+            const climbRate = airplane.nominalClimbRateFeetPerMinute;
+            const descentRate = Math.abs(airplane.nominalDescentRateFeetPerMinute);
+            const targetCruiseAltitude = Math.max(
+                airplane.nominalCruiseAltitudeFeetMsl,
+                departure.altitudeFeetMsl,
+                arrival.altitudeFeetMsl
+            );
+
+            const climbDelta = Math.max(0, targetCruiseAltitude - departure.altitudeFeetMsl);
+            const descentDelta = Math.max(0, targetCruiseAltitude - arrival.altitudeFeetMsl);
+            const climbMinutes = climbRate > 0 ? climbDelta / climbRate : 0;
+            const descentMinutes = descentRate > 0 ? descentDelta / descentRate : 0;
+            const climbSpeedMph = airplane.climbSpeedKts * 1.15078;
+            const descentSpeedMph = airplane.descentSpeedKts * 1.15078;
+            let climbDistance = (climbMinutes / 60) * climbSpeedMph;
+            let descentDistance = (descentMinutes / 60) * descentSpeedMph;
+
+            const nonCruiseDistance = climbDistance + descentDistance;
+            if (nonCruiseDistance > 0 && nonCruiseDistance > totalDistanceMiles) {
+                const factor = totalDistanceMiles / nonCruiseDistance;
+                climbDistance *= factor;
+                descentDistance *= factor;
+            }
+
+            const climbEndMiles = Math.max(0, Math.min(totalDistanceMiles, climbDistance));
+            const descentStartMiles = Math.max(climbEndMiles, totalDistanceMiles - descentDistance);
+
+            const minAltitude = Math.min(departure.altitudeFeetMsl, arrival.altitudeFeetMsl);
+            const maxAltitude = Math.max(targetCruiseAltitude, departure.altitudeFeetMsl, arrival.altitudeFeetMsl);
+            const altitudePadding = Math.max(300, (maxAltitude - minAltitude) * 0.1);
+            const yMin = Math.max(0, minAltitude - altitudePadding);
+            const yMax = maxAltitude + altitudePadding;
+
+            function xToPixel(miles) {
+                const safeDistance = Math.max(totalDistanceMiles, 1);
+                return marginLeft + (miles / safeDistance) * plotWidth;
+            }
+
+            function yToPixel(altitudeFeet) {
+                return marginTop + ((yMax - altitudeFeet) / (yMax - yMin || 1)) * plotHeight;
+            }
+
+            const axisX = createSvgElement('line');
+            axisX.setAttribute('x1', String(marginLeft));
+            axisX.setAttribute('y1', String(height - marginBottom));
+            axisX.setAttribute('x2', String(width - marginRight));
+            axisX.setAttribute('y2', String(height - marginBottom));
+            axisX.setAttribute('stroke', '#444');
+            profile.appendChild(axisX);
+
+            const axisY = createSvgElement('line');
+            axisY.setAttribute('x1', String(marginLeft));
+            axisY.setAttribute('y1', String(marginTop));
+            axisY.setAttribute('x2', String(marginLeft));
+            axisY.setAttribute('y2', String(height - marginBottom));
+            axisY.setAttribute('stroke', '#444');
+            profile.appendChild(axisY);
+
+            const profileLine = createSvgElement('polyline');
+            const points = [
+                `${xToPixel(0)},${yToPixel(departure.altitudeFeetMsl)}`,
+                `${xToPixel(climbEndMiles)},${yToPixel(targetCruiseAltitude)}`,
+                `${xToPixel(descentStartMiles)},${yToPixel(targetCruiseAltitude)}`,
+                `${xToPixel(totalDistanceMiles)},${yToPixel(arrival.altitudeFeetMsl)}`
+            ].join(' ');
+            profileLine.setAttribute('points', points);
+            profileLine.setAttribute('fill', 'none');
+            profileLine.setAttribute('stroke', '#0a66c2');
+            profileLine.setAttribute('stroke-width', '2.5');
+            profile.appendChild(profileLine);
+
+            const climbBar = createSvgElement('line');
+            climbBar.setAttribute('x1', String(xToPixel(climbEndMiles)));
+            climbBar.setAttribute('y1', String(marginTop));
+            climbBar.setAttribute('x2', String(xToPixel(climbEndMiles)));
+            climbBar.setAttribute('y2', String(height - marginBottom));
+            climbBar.setAttribute('stroke', '#1b9e77');
+            climbBar.setAttribute('stroke-dasharray', '4 3');
+            profile.appendChild(climbBar);
+
+            const descentBar = createSvgElement('line');
+            descentBar.setAttribute('x1', String(xToPixel(descentStartMiles)));
+            descentBar.setAttribute('y1', String(marginTop));
+            descentBar.setAttribute('x2', String(xToPixel(descentStartMiles)));
+            descentBar.setAttribute('y2', String(height - marginBottom));
+            descentBar.setAttribute('stroke', '#d95f02');
+            descentBar.setAttribute('stroke-dasharray', '4 3');
+            profile.appendChild(descentBar);
+
+            const climbTick = createSvgElement('line');
+            climbTick.setAttribute('x1', String(xToPixel(climbEndMiles)));
+            climbTick.setAttribute('y1', String(height - marginBottom));
+            climbTick.setAttribute('x2', String(xToPixel(climbEndMiles)));
+            climbTick.setAttribute('y2', String(height - marginBottom + 8));
+            climbTick.setAttribute('stroke', '#1b9e77');
+            climbTick.setAttribute('stroke-width', '2');
+            profile.appendChild(climbTick);
+
+            const descentTick = createSvgElement('line');
+            descentTick.setAttribute('x1', String(xToPixel(descentStartMiles)));
+            descentTick.setAttribute('y1', String(height - marginBottom));
+            descentTick.setAttribute('x2', String(xToPixel(descentStartMiles)));
+            descentTick.setAttribute('y2', String(height - marginBottom + 8));
+            descentTick.setAttribute('stroke', '#d95f02');
+            descentTick.setAttribute('stroke-width', '2');
+            profile.appendChild(descentTick);
+
+            const labels = [
+                { text: '0 mi', x: xToPixel(0), y: height - 10 },
+                { text: `${totalDistanceMiles.toFixed(1)} mi`, x: xToPixel(totalDistanceMiles), y: height - 10 },
+                { text: `${Math.round(yMin)} ft`, x: 6, y: yToPixel(yMin) + 4 },
+                { text: `${Math.round(yMax)} ft`, x: 6, y: yToPixel(yMax) + 4 }
+            ];
+
+            labels.forEach((labelData) => {
+                const label = createSvgElement('text');
+                label.setAttribute('x', String(labelData.x));
+                label.setAttribute('y', String(labelData.y));
+                label.setAttribute('font-size', '10');
+                label.setAttribute('fill', '#333');
+                label.textContent = labelData.text;
+                profile.appendChild(label);
+            });
+
+            caption.textContent = `${departure.code} to ${arrival.code}: ${totalDistanceMiles.toFixed(1)} miles.`;
         }
 
         function renderSchematicMap() {
@@ -300,7 +529,10 @@
             });
 
             if (departure && arrival) {
-                caption.textContent = `Departure ${departure.code} and arrival ${arrival.code} shown on schematic map.`;
+                const heading = calculateInitialHeadingDegrees(departure, arrival);
+                const headingRounded = Math.round(heading);
+                const cardinal = headingToCardinal(heading);
+                caption.textContent = `Route ${departure.code} -> ${arrival.code}. Heading ${headingRounded} deg (${cardinal}).`;
                 return;
             }
 
@@ -372,6 +604,7 @@
                 }
 
                 renderSchematicMap();
+                renderAltitudeProfile();
             }
 
             function hideSuggestions() {
@@ -426,6 +659,7 @@
                 }
 
                 renderSchematicMap();
+                renderAltitudeProfile();
             });
 
             input.addEventListener('focus', () => {
@@ -477,6 +711,7 @@
         populateRunwaySelect('departure-airport', 'departure-runway');
         populateRunwaySelect('arrival-airport', 'arrival-runway');
         renderSchematicMap();
+        renderAltitudeProfile();
 
         // VOR Stations
         const vors = [
