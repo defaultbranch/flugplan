@@ -138,6 +138,16 @@
                 </select>
             </div>
         </section>
+
+        <section class="panel">
+            <h2>VOR</h2>
+
+            <div class="field">
+                <label for="vor-station">Station</label>
+                <input id="vor-station" name="vor-station" type="text" autocomplete="off">
+                <div id="vor-station-suggestions" class="suggestions"></div>
+            </div>
+        </section>
     </div>
 
     <div class="output-panels">
@@ -209,6 +219,12 @@
             }
         ];
 
+        const vors = [
+            { name: 'ZURICH EAST', code: 'ZUE', frequency: 110.05, latitude: 47.591944, longitude: 8.8175 },
+            { name: 'KLOTEN', code: 'KLO', frequency: 114.85, latitude: 47.456944, longitude: 8.545556 },
+            { name: 'WILLISAU', code: 'WIL', frequency: 116.90, latitude: 47.178056, longitude: 7.905833 }
+        ];
+
         const airplaneSelect = document.getElementById('airplane');
 
         airplanes.forEach((airplane) => {
@@ -226,6 +242,10 @@
             return `${airport.code} - ${airport.name}`;
         }
 
+        function formatVor(vor) {
+            return `${vor.code} - ${vor.name}`;
+        }
+
         function formatRunway(runway) {
             return `${runway.name} (${runway.orientationDeg} deg)`;
         }
@@ -241,6 +261,21 @@
                 const formatted = formatAirport(airport).toLowerCase();
                 return airport.code.toLowerCase() === normalized
                     || airport.name.toLowerCase() === normalized
+                    || formatted === normalized;
+            }) || null;
+        }
+
+        function findVor(value) {
+            const normalized = value.trim().toLowerCase();
+
+            if (!normalized) {
+                return null;
+            }
+
+            return vors.find((vor) => {
+                const formatted = formatVor(vor).toLowerCase();
+                return vor.code.toLowerCase() === normalized
+                    || vor.name.toLowerCase() === normalized
                     || formatted === normalized;
             }) || null;
         }
@@ -453,6 +488,7 @@
             const caption = document.getElementById('map-caption');
             const departure = findAirport(document.getElementById('departure-airport').value);
             const arrival = findAirport(document.getElementById('arrival-airport').value);
+            const selectedVor = findVor(document.getElementById('vor-station').value);
 
             while (map.firstChild) {
                 map.removeChild(map.firstChild);
@@ -461,8 +497,9 @@
             const width = 360;
             const height = 220;
             const margin = 26;
-            const latitudes = airports.map((airport) => airport.latitude);
-            const longitudes = airports.map((airport) => airport.longitude);
+            const mapPoints = airports.concat(vors);
+            const latitudes = mapPoints.map((point) => point.latitude);
+            const longitudes = mapPoints.map((point) => point.longitude);
             const minLat = Math.min(...latitudes);
             const maxLat = Math.max(...latitudes);
             const minLon = Math.min(...longitudes);
@@ -472,11 +509,11 @@
                 return document.createElementNS('http://www.w3.org/2000/svg', name);
             }
 
-            function project(airport) {
+            function project(point) {
                 const lonRange = maxLon - minLon || 1;
                 const latRange = maxLat - minLat || 1;
-                const x = margin + ((airport.longitude - minLon) / lonRange) * (width - margin * 2);
-                const y = height - margin - ((airport.latitude - minLat) / latRange) * (height - margin * 2);
+                const x = margin + ((point.longitude - minLon) / lonRange) * (width - margin * 2);
+                const y = height - margin - ((point.latitude - minLat) / latRange) * (height - margin * 2);
                 return { x, y };
             }
 
@@ -490,8 +527,8 @@
 
             const selectedAirports = [departure, arrival].filter(Boolean);
 
-            if (selectedAirports.length === 0) {
-                caption.textContent = 'Select departure and arrival airports to display them on the map.';
+            if (selectedAirports.length === 0 && !selectedVor) {
+                caption.textContent = 'Select departure, arrival, or a VOR station to display them on the map.';
                 return;
             }
 
@@ -528,11 +565,54 @@
                 map.appendChild(label);
             });
 
+            if (selectedVor) {
+                const point = project(selectedVor);
+
+                const marker = createSvgElement('rect');
+                marker.setAttribute('x', String(point.x - 4));
+                marker.setAttribute('y', String(point.y - 4));
+                marker.setAttribute('width', '8');
+                marker.setAttribute('height', '8');
+                marker.setAttribute('fill', '#b22222');
+                map.appendChild(marker);
+
+                const label = createSvgElement('text');
+                label.setAttribute('x', String(point.x + 8));
+                label.setAttribute('y', String(point.y + 12));
+                label.setAttribute('font-size', '11');
+                label.setAttribute('fill', '#222');
+                label.textContent = selectedVor.code;
+                map.appendChild(label);
+            }
+
+            if (departure && arrival && selectedVor) {
+                const heading = calculateInitialHeadingDegrees(departure, arrival);
+                const headingRounded = Math.round(heading);
+                const cardinal = headingToCardinal(heading);
+                caption.textContent = `Route ${departure.code} -> ${arrival.code}. Heading ${headingRounded} deg (${cardinal}). VOR ${selectedVor.code} highlighted.`;
+                return;
+            }
+
             if (departure && arrival) {
                 const heading = calculateInitialHeadingDegrees(departure, arrival);
                 const headingRounded = Math.round(heading);
                 const cardinal = headingToCardinal(heading);
                 caption.textContent = `Route ${departure.code} -> ${arrival.code}. Heading ${headingRounded} deg (${cardinal}).`;
+                return;
+            }
+
+            if (selectedVor && departure) {
+                caption.textContent = `Departure ${departure.code} shown with VOR ${selectedVor.code}. Select an arrival airport to complete the route.`;
+                return;
+            }
+
+            if (selectedVor && arrival) {
+                caption.textContent = `Arrival ${arrival.code} shown with VOR ${selectedVor.code}. Select a departure airport to complete the route.`;
+                return;
+            }
+
+            if (selectedVor) {
+                caption.textContent = `VOR ${selectedVor.code} shown. Select departure and arrival airports to display the route.`;
                 return;
             }
 
@@ -568,7 +648,16 @@
             });
         }
 
-        function setupAirportAutocomplete(inputId, suggestionsId) {
+        function setupAutocomplete(config) {
+            const {
+                inputId,
+                suggestionsId,
+                items,
+                formatItem,
+                matchesQuery,
+                onSelect,
+                onInput
+            } = config;
             const input = document.getElementById(inputId);
             const suggestions = document.getElementById(suggestionsId);
             let activeIndex = -1;
@@ -591,20 +680,10 @@
                 }
             }
 
-            function selectAirport(airport) {
-                input.value = formatAirport(airport);
+            function selectItem(item) {
+                input.value = formatItem(item);
                 hideSuggestions();
-
-                if (input.id === 'departure-airport') {
-                    populateRunwaySelect('departure-airport', 'departure-runway');
-                }
-
-                if (input.id === 'arrival-airport') {
-                    populateRunwaySelect('arrival-airport', 'arrival-runway');
-                }
-
-                renderSchematicMap();
-                renderAltitudeProfile();
+                onSelect(item);
             }
 
             function hideSuggestions() {
@@ -621,10 +700,7 @@
                     return;
                 }
 
-                const matches = airports.filter((airport) => {
-                    return airport.code.toLowerCase().includes(normalizedQuery)
-                        || airport.name.toLowerCase().includes(normalizedQuery);
-                });
+                const matches = items.filter((item) => matchesQuery(item, normalizedQuery));
 
                 if (matches.length === 0) {
                     hideSuggestions();
@@ -634,12 +710,12 @@
                 suggestions.innerHTML = '';
                 activeIndex = -1;
 
-                matches.forEach((airport) => {
+                matches.forEach((item) => {
                     const option = document.createElement('div');
                     option.className = 'suggestion';
-                    option.textContent = formatAirport(airport);
+                    option.textContent = formatItem(item);
                     option.addEventListener('mousedown', () => {
-                        selectAirport(airport);
+                        selectItem(item);
                     });
                     suggestions.appendChild(option);
                 });
@@ -649,17 +725,7 @@
 
             input.addEventListener('input', () => {
                 showSuggestions(input.value);
-
-                if (input.id === 'departure-airport') {
-                    populateRunwaySelect('departure-airport', 'departure-runway');
-                }
-
-                if (input.id === 'arrival-airport') {
-                    populateRunwaySelect('arrival-airport', 'arrival-runway');
-                }
-
-                renderSchematicMap();
-                renderAltitudeProfile();
+                onInput();
             });
 
             input.addEventListener('focus', () => {
@@ -705,20 +771,69 @@
             });
         }
 
-        setupAirportAutocomplete('departure-airport', 'departure-airport-suggestions');
-        setupAirportAutocomplete('arrival-airport', 'arrival-airport-suggestions');
+        setupAutocomplete({
+            inputId: 'departure-airport',
+            suggestionsId: 'departure-airport-suggestions',
+            items: airports,
+            formatItem: formatAirport,
+            matchesQuery: (airport, normalizedQuery) => {
+                return airport.code.toLowerCase().includes(normalizedQuery)
+                    || airport.name.toLowerCase().includes(normalizedQuery);
+            },
+            onSelect: () => {
+                populateRunwaySelect('departure-airport', 'departure-runway');
+                renderSchematicMap();
+                renderAltitudeProfile();
+            },
+            onInput: () => {
+                populateRunwaySelect('departure-airport', 'departure-runway');
+                renderSchematicMap();
+                renderAltitudeProfile();
+            }
+        });
+
+        setupAutocomplete({
+            inputId: 'arrival-airport',
+            suggestionsId: 'arrival-airport-suggestions',
+            items: airports,
+            formatItem: formatAirport,
+            matchesQuery: (airport, normalizedQuery) => {
+                return airport.code.toLowerCase().includes(normalizedQuery)
+                    || airport.name.toLowerCase().includes(normalizedQuery);
+            },
+            onSelect: () => {
+                populateRunwaySelect('arrival-airport', 'arrival-runway');
+                renderSchematicMap();
+                renderAltitudeProfile();
+            },
+            onInput: () => {
+                populateRunwaySelect('arrival-airport', 'arrival-runway');
+                renderSchematicMap();
+                renderAltitudeProfile();
+            }
+        });
+
+        setupAutocomplete({
+            inputId: 'vor-station',
+            suggestionsId: 'vor-station-suggestions',
+            items: vors,
+            formatItem: formatVor,
+            matchesQuery: (vor, normalizedQuery) => {
+                return vor.code.toLowerCase().includes(normalizedQuery)
+                    || vor.name.toLowerCase().includes(normalizedQuery);
+            },
+            onSelect: () => {
+                renderSchematicMap();
+            },
+            onInput: () => {
+                renderSchematicMap();
+            }
+        });
 
         populateRunwaySelect('departure-airport', 'departure-runway');
         populateRunwaySelect('arrival-airport', 'arrival-runway');
         renderSchematicMap();
         renderAltitudeProfile();
-
-        // VOR Stations
-        const vors = [
-            { name: 'ZURICH EAST', code: 'ZUE', frequency: 110.05, latitude: 47.591944, longitude: 8.8175 },
-            { name: 'KLOTEN', code: 'KLO', frequency: 114.85, latitude: 47.456944, longitude: 8.545556 },
-            { name: 'WILLISAU', code: 'WIL', frequency: 116.90, latitude: 47.178056, longitude: 7.905833 }
-        ];
     </script>
 </body>
 </html>

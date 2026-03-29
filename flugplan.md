@@ -4,12 +4,13 @@
 A single-page flight planning web application built with HTML, small inline CSS, and vanilla JavaScript. No frameworks or build tools required.
 
 ## Current Features
-- Single-screen layout with departure, arrival, and airplane input panels; output panels below
+- Single-screen layout with departure, arrival, airplane, and VOR input panels; output panels below
 - Airport input fields in departure and arrival panels with dropdown suggestions and keyboard selection
 - Runway select fields in departure and arrival panels, populated from the selected airport with runway name and orientation
 - Airplane select field in its own panel
+- VOR station input field with dropdown suggestions and keyboard selection
 - Map panel with a schematic 2D map (no map tiles)
-- Schematic map shows selected departure and arrival airports
+- Schematic map shows selected departure and arrival airports and can highlight a selected VOR station
 - Map caption shows route heading direction
 - Altitude profile panel with altitude-over-distance chart
 - Altitude chart uses miles on x-axis and feet MSL on y-axis
@@ -41,16 +42,19 @@ flugplan/
 - Keep markdown updated whenever HTML, requirements, or instructions change
 
 ## UI Notes
-- Departure, arrival, and airplane are in the top input row/grid; map and altitude profile are side by side below
+- Departure, arrival, airplane, and VOR are in the top input row/grid; map and altitude profile are side by side below
 - Runway selects populate automatically when a known airport is selected or typed exactly
 - Airplane select is populated from the airplane data array
-- Output map is schematic SVG based on airport coordinates; no real map tiles are used
+- VOR input uses a custom suggestion list generated from the VOR data
+- Each VOR suggestion is a single combined entry in the form `CODE - Name`
+- VOR suggestions support typing either station code or human-readable name
+- Output map is schematic SVG based on airport and VOR coordinates; no real map tiles are used
 - Altitude profile is a schematic SVG derived from selected airports and airplane performance
 - Climb-end and descent-start are indicated on the x-axis without text labels
 - Airport inputs use custom suggestion lists generated from the airport data
 - Each airport suggestion is a single combined entry in the form `ICAO - Name`
 - Airport suggestions support typing either ICAO code or human-readable name
-- Keyboard behavior: down/up arrows move through suggestions, Enter selects, Escape closes
+- Keyboard behavior for airport and VOR suggestions: down/up arrows move through suggestions, Enter selects, Escape closes
 
 ## Data Model / Entities
 
@@ -97,8 +101,9 @@ Current runway source: runway identifiers and available heading data for LSMD, L
 
 ## Next Session Handoff
 - Keep markdown updated whenever HTML, requirements, or instructions change.
-- Current outputs: Map and Altitude Profile are schematic SVGs and update from selected departure/arrival airports and airplane.
+- Current outputs: Map and Altitude Profile are schematic SVGs; the map updates from selected departure/arrival airports and optional VOR, and the altitude profile updates from selected departure/arrival airports and airplane.
 - Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
+- VOR input resolves exact known station values (`CODE`, full name, or `CODE - Name`) for selection/highlighting.
 
 ## Planned Features
 Document future features here as we build them.
