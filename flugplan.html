@@ -4,11 +4,232 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flugplan</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 24px;
+        }
+
+        .panels {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+
+        .panel {
+            border: 1px solid #ccc;
+            padding: 16px;
+        }
+
+        .field {
+            margin-top: 12px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 6px;
+        }
+
+        .suggestions {
+            background: #fff;
+            border: 1px solid #ccc;
+            display: none;
+            left: 0;
+            margin-top: 2px;
+            max-height: 160px;
+            overflow-y: auto;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            z-index: 1;
+        }
+
+        .suggestion {
+            cursor: pointer;
+            padding: 6px;
+        }
+
+        .suggestion.active,
+        .suggestion:hover {
+            background: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
     <h1>Flugplan</h1>
 
+    <div class="panels">
+        <section class="panel">
+            <h2>Departure</h2>
+
+            <div class="field">
+                <label for="departure-airport">Airport</label>
+                <input id="departure-airport" name="departure-airport" type="text" autocomplete="off">
+                <div id="departure-airport-suggestions" class="suggestions"></div>
+            </div>
+
+            <div class="field">
+                <label for="departure-runway">Runway</label>
+                <select id="departure-runway" name="departure-runway">
+                    <option value="">Select runway</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Arrival</h2>
+
+            <div class="field">
+                <label for="arrival-airport">Airport</label>
+                <input id="arrival-airport" name="arrival-airport" type="text" autocomplete="off">
+                <div id="arrival-airport-suggestions" class="suggestions"></div>
+            </div>
+
+            <div class="field">
+                <label for="arrival-runway">Runway</label>
+                <select id="arrival-runway" name="arrival-runway">
+                    <option value="">Select runway</option>
+                </select>
+            </div>
+        </section>
+    </div>
+
     <script>
+        const airports = [
+            { code: 'LSMD', name: 'Dübendorf' },
+            { code: 'LSZF', name: 'Birrfeld' },
+            { code: 'LSZM', name: 'Mollis Airfield' }
+        ];
+
+        function formatAirport(airport) {
+            return `${airport.code} - ${airport.name}`;
+        }
+
+        function setupAirportAutocomplete(inputId, suggestionsId) {
+            const input = document.getElementById(inputId);
+            const suggestions = document.getElementById(suggestionsId);
+            let activeIndex = -1;
+
+            function getOptions() {
+                return Array.from(suggestions.querySelectorAll('.suggestion'));
+            }
+
+            function setActiveOption(index) {
+                const options = getOptions();
+
+                options.forEach((option, optionIndex) => {
+                    option.classList.toggle('active', optionIndex === index);
+                });
+
+                activeIndex = index;
+
+                if (activeIndex >= 0 && options[activeIndex]) {
+                    options[activeIndex].scrollIntoView({ block: 'nearest' });
+                }
+            }
+
+            function selectAirport(airport) {
+                input.value = formatAirport(airport);
+                hideSuggestions();
+            }
+
+            function hideSuggestions() {
+                suggestions.style.display = 'none';
+                suggestions.innerHTML = '';
+                activeIndex = -1;
+            }
+
+            function showSuggestions(query) {
+                const normalizedQuery = query.trim().toLowerCase();
+
+                if (!normalizedQuery) {
+                    hideSuggestions();
+                    return;
+                }
+
+                const matches = airports.filter((airport) => {
+                    return airport.code.toLowerCase().includes(normalizedQuery)
+                        || airport.name.toLowerCase().includes(normalizedQuery);
+                });
+
+                if (matches.length === 0) {
+                    hideSuggestions();
+                    return;
+                }
+
+                suggestions.innerHTML = '';
+                activeIndex = -1;
+
+                matches.forEach((airport) => {
+                    const option = document.createElement('div');
+                    option.className = 'suggestion';
+                    option.textContent = formatAirport(airport);
+                    option.addEventListener('mousedown', () => {
+                        selectAirport(airport);
+                    });
+                    suggestions.appendChild(option);
+                });
+
+                suggestions.style.display = 'block';
+            }
+
+            input.addEventListener('input', () => {
+                showSuggestions(input.value);
+            });
+
+            input.addEventListener('focus', () => {
+                showSuggestions(input.value);
+            });
+
+            input.addEventListener('keydown', (event) => {
+                const options = getOptions();
+
+                if (options.length === 0) {
+                    return;
+                }
+
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+
+                    const nextIndex = activeIndex < options.length - 1 ? activeIndex + 1 : 0;
+                    setActiveOption(nextIndex);
+                    return;
+                }
+
+                if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+
+                    const nextIndex = activeIndex > 0 ? activeIndex - 1 : options.length - 1;
+                    setActiveOption(nextIndex);
+                    return;
+                }
+
+                if (event.key === 'Enter' && activeIndex >= 0) {
+                    event.preventDefault();
+                    options[activeIndex].dispatchEvent(new MouseEvent('mousedown'));
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    hideSuggestions();
+                }
+            });
+
+            input.addEventListener('blur', () => {
+                window.setTimeout(hideSuggestions, 100);
+            });
+        }
+
+        setupAirportAutocomplete('departure-airport', 'departure-airport-suggestions');
+        setupAirportAutocomplete('arrival-airport', 'arrival-airport-suggestions');
+
         // VOR Stations
         const vors = [
             { name: 'ZURICH EAST', code: 'ZUE', frequency: 110.05, latitude: 47.591944, longitude: 8.8175 },
