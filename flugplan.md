@@ -34,8 +34,9 @@ A single-page flight planning web application built with HTML, small inline CSS,
 flugplan/
 ├── airports.js       # Airport dataset with JSDoc typedefs
 ├── airplanes.js      # Airplane dataset with JSDoc typedefs
+├── flugplan.css      # Application stylesheet
 ├── vors.js           # VOR dataset with JSDoc typedefs
-├── flugplan.html     # Single page application
+├── flugplan.html     # Single page application shell and scripts
 └── flugplan.md       # This documentation
 ```
 
@@ -44,8 +45,9 @@ flugplan/
 2. No server needed - fully static
 
 ## Development Notes
-- Airport data lives in `airports.js`; airplane data lives in `airplanes.js`; VOR data lives in `vors.js`; the application logic remains embedded in `flugplan.html`
+- Airport data lives in `airports.js`; airplane data lives in `airplanes.js`; VOR data lives in `vors.js`; styles live in `flugplan.css`; the application logic remains embedded in `flugplan.html`
 - Layout is intentionally minimal; avoid adding behavior unless explicitly requested
+- CSS is loaded from `flugplan.css`
 - JavaScript is embedded in `<script>` tag at bottom
 - Browser localStorage is used to remember current control values across page reloads
 - Keep markdown updated whenever HTML, requirements, or instructions change
