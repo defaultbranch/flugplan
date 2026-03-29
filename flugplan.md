@@ -19,6 +19,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - If the requested cruise altitude cannot be reached before descent must begin, the profile peaks at the climb-to-descent transition instead of forcing a cruise segment
 - Altitude chart includes vertical bars for climb end and descent start, with x-axis indicators
 - Altitude chart x-axis shows selected-VOR distance annotations at takeoff, climb-end, descent-start, and landing points, and can also show climb/descent distance labels when space permits
+- Altitude profile caption includes an estimated total flight time derived from climb, cruise, and descent speeds/distances
 - Plain JavaScript data section
 - Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, altitude in feet MSL, and runway objects
 - Airplane data with one entry (Cessna 172P Skyhawk) including climb, cruise, and descent performance
@@ -47,8 +48,9 @@ flugplan/
 - Keep markdown updated whenever HTML, requirements, or instructions change
 
 ## UI Notes
-- Departure, arrival, airplane, and VOR are in the top input row/grid; the airplane panel contains airplane selection plus an editable cruise altitude field; map and altitude profile are side by side below
+- Departure, arrival, airplane, and VOR are in the top input row/grid; the airplane panel contains airplane selection plus editable cruise altitude, climb speed/rate, cruise speed, and descent speed/rate; map and altitude profile are side by side below
 - Input rows use a compact one-line layout with label and control aligned horizontally
+- Labels are configured not to wrap in the one-line field layout
 - Runway selects populate automatically when a known airport is selected or typed exactly
 - Airplane select is populated from the airplane data array
 - Selecting an airplane overwrites airplane performance inputs with that airplane's nominal values, but each value can still be edited manually
@@ -125,9 +127,10 @@ Current runway source: runway identifiers and available heading data for LSMD, L
 
 ## Next Session Handoff
 - Keep markdown updated whenever HTML, requirements, or instructions change.
-- Current outputs: Map and Altitude Profile are schematic SVGs; the map updates from selected departure/arrival airports and optional VOR, and the altitude profile updates from selected departure/arrival airports and airplane.
+- Current outputs: Map and Altitude Profile are schematic SVGs; the map updates from selected departure/arrival airports and optional VOR, and the altitude profile updates from selected departure/arrival airports plus current airplane performance inputs.
 - The altitude profile uses the current cruise altitude input as its target ceiling when reachable; otherwise it peaks where fixed-rate climb transitions directly into fixed-rate descent.
 - The altitude profile x-axis shows total route distance, selected-VOR distances at key flight phase points, and optional climb/descent distance labels when spacing allows.
+- The altitude profile caption also shows estimated total flight time in minutes.
 - Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
 - VOR input resolves exact known station values (`CODE`, full name, or `CODE - Name`) for selection/highlighting.
 - Current control values persist in browser localStorage and are restored during initialization when valid, including airplane performance inputs.
