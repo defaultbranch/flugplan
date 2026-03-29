@@ -48,6 +48,7 @@ flugplan/
 
 ## UI Notes
 - Departure, arrival, airplane, and VOR are in the top input row/grid; the airplane panel contains airplane selection plus an editable cruise altitude field; map and altitude profile are side by side below
+- Input rows use a compact one-line layout with label and control aligned horizontally
 - Runway selects populate automatically when a known airport is selected or typed exactly
 - Airplane select is populated from the airplane data array
 - Selecting an airplane overwrites the cruise altitude field with that airplane's nominal cruise altitude, but the value can still be edited manually
