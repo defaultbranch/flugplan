@@ -148,6 +148,31 @@
                 <label for="cruise-altitude-feet-msl">Cruise Altitude (ft MSL)</label>
                 <input id="cruise-altitude-feet-msl" name="cruise-altitude-feet-msl" type="number" min="0" step="100" inputmode="numeric">
             </div>
+
+            <div class="field">
+                <label for="climb-speed-kts">Climb Speed (kts)</label>
+                <input id="climb-speed-kts" name="climb-speed-kts" type="number" min="0" step="1" inputmode="numeric">
+            </div>
+
+            <div class="field">
+                <label for="climb-rate-fpm">Climb Rate (ft/min)</label>
+                <input id="climb-rate-fpm" name="climb-rate-fpm" type="number" min="0" step="10" inputmode="numeric">
+            </div>
+
+            <div class="field">
+                <label for="cruise-speed-kts">Cruise Speed (kts)</label>
+                <input id="cruise-speed-kts" name="cruise-speed-kts" type="number" min="0" step="1" inputmode="numeric">
+            </div>
+
+            <div class="field">
+                <label for="descent-speed-kts">Descent Speed (kts)</label>
+                <input id="descent-speed-kts" name="descent-speed-kts" type="number" min="0" step="1" inputmode="numeric">
+            </div>
+
+            <div class="field">
+                <label for="descent-rate-fpm">Descent Rate (ft/min)</label>
+                <input id="descent-rate-fpm" name="descent-rate-fpm" type="number" min="0" step="10" inputmode="numeric">
+            </div>
         </section>
 
         <section class="panel">
@@ -238,6 +263,11 @@
 
         const airplaneSelect = document.getElementById('airplane');
         const cruiseAltitudeInput = document.getElementById('cruise-altitude-feet-msl');
+        const climbSpeedInput = document.getElementById('climb-speed-kts');
+        const climbRateInput = document.getElementById('climb-rate-fpm');
+        const cruiseSpeedInput = document.getElementById('cruise-speed-kts');
+        const descentSpeedInput = document.getElementById('descent-speed-kts');
+        const descentRateInput = document.getElementById('descent-rate-fpm');
         const departureRunwaySelect = document.getElementById('departure-runway');
         const arrivalRunwaySelect = document.getElementById('arrival-runway');
         const persistedControlIds = [
@@ -247,6 +277,11 @@
             'arrival-runway',
             'airplane',
             'cruise-altitude-feet-msl',
+            'climb-speed-kts',
+            'climb-rate-fpm',
+            'cruise-speed-kts',
+            'descent-speed-kts',
+            'descent-rate-fpm',
             'vor-station'
         ];
         const storageKeyPrefix = 'flugplan:';
@@ -302,31 +337,71 @@
             const savedDepartureRunway = loadControlValue('departure-runway') || '';
             const savedArrivalRunway = loadControlValue('arrival-runway') || '';
             const savedCruiseAltitude = loadControlValue('cruise-altitude-feet-msl');
+            const savedClimbSpeed = loadControlValue('climb-speed-kts');
+            const savedClimbRate = loadControlValue('climb-rate-fpm');
+            const savedCruiseSpeed = loadControlValue('cruise-speed-kts');
+            const savedDescentSpeed = loadControlValue('descent-speed-kts');
+            const savedDescentRate = loadControlValue('descent-rate-fpm');
 
             departureAirportInput.value = loadControlValue('departure-airport') || '';
             arrivalAirportInput.value = loadControlValue('arrival-airport') || '';
             vorStationInput.value = loadControlValue('vor-station') || '';
             setSelectValueIfAvailable(airplaneSelect, loadControlValue('airplane') || '');
             cruiseAltitudeInput.value = savedCruiseAltitude || '';
+            climbSpeedInput.value = savedClimbSpeed || '';
+            climbRateInput.value = savedClimbRate || '';
+            cruiseSpeedInput.value = savedCruiseSpeed || '';
+            descentSpeedInput.value = savedDescentSpeed || '';
+            descentRateInput.value = savedDescentRate || '';
 
             populateRunwaySelect('departure-airport', 'departure-runway', savedDepartureRunway);
             populateRunwaySelect('arrival-airport', 'arrival-runway', savedArrivalRunway);
 
-            if (!savedCruiseAltitude) {
-                applySelectedAirplaneCruiseAltitude();
+            const hasSavedAirplanePerformance = Boolean(
+                savedCruiseAltitude
+                || savedClimbSpeed
+                || savedClimbRate
+                || savedCruiseSpeed
+                || savedDescentSpeed
+                || savedDescentRate
+            );
+
+            if (!hasSavedAirplanePerformance) {
+                applySelectedAirplanePerformance();
             }
 
             persistCurrentControlValues();
         }
 
-        function applySelectedAirplaneCruiseAltitude() {
+        function applySelectedAirplanePerformance() {
             const airplane = findAirplane(airplaneSelect.value);
-            cruiseAltitudeInput.value = airplane ? String(airplane.nominalCruiseAltitudeFeetMsl) : '';
+
+            if (!airplane) {
+                cruiseAltitudeInput.value = '';
+                climbSpeedInput.value = '';
+                climbRateInput.value = '';
+                cruiseSpeedInput.value = '';
+                descentSpeedInput.value = '';
+                descentRateInput.value = '';
+            } else {
+                cruiseAltitudeInput.value = String(airplane.nominalCruiseAltitudeFeetMsl);
+                climbSpeedInput.value = String(airplane.climbSpeedKts);
+                climbRateInput.value = String(airplane.nominalClimbRateFeetPerMinute);
+                cruiseSpeedInput.value = String(airplane.cruiseSpeedKts);
+                descentSpeedInput.value = String(airplane.descentSpeedKts);
+                descentRateInput.value = String(Math.abs(airplane.nominalDescentRateFeetPerMinute));
+            }
+
             saveControlValue('cruise-altitude-feet-msl', cruiseAltitudeInput.value);
+            saveControlValue('climb-speed-kts', climbSpeedInput.value);
+            saveControlValue('climb-rate-fpm', climbRateInput.value);
+            saveControlValue('cruise-speed-kts', cruiseSpeedInput.value);
+            saveControlValue('descent-speed-kts', descentSpeedInput.value);
+            saveControlValue('descent-rate-fpm', descentRateInput.value);
         }
 
         airplaneSelect.addEventListener('change', () => {
-            applySelectedAirplaneCruiseAltitude();
+            applySelectedAirplanePerformance();
             renderAltitudeProfile();
             saveControlValue('airplane', airplaneSelect.value);
         });
@@ -335,6 +410,19 @@
             saveControlValue('cruise-altitude-feet-msl', cruiseAltitudeInput.value);
             renderAltitudeProfile();
         });
+
+        function bindAirplanePerformanceInput(inputElement, storageKey) {
+            inputElement.addEventListener('input', () => {
+                saveControlValue(storageKey, inputElement.value);
+                renderAltitudeProfile();
+            });
+        }
+
+        bindAirplanePerformanceInput(climbSpeedInput, 'climb-speed-kts');
+        bindAirplanePerformanceInput(climbRateInput, 'climb-rate-fpm');
+        bindAirplanePerformanceInput(cruiseSpeedInput, 'cruise-speed-kts');
+        bindAirplanePerformanceInput(descentSpeedInput, 'descent-speed-kts');
+        bindAirplanePerformanceInput(descentRateInput, 'descent-rate-fpm');
 
         departureRunwaySelect.addEventListener('change', () => {
             saveControlValue('departure-runway', departureRunwaySelect.value);
@@ -401,6 +489,32 @@
             return airplane ? airplane.nominalCruiseAltitudeFeetMsl : null;
         }
 
+        function parsePositiveNumberOrFallback(rawValue, fallbackValue) {
+            const parsedValue = Number.parseFloat(rawValue);
+
+            if (Number.isFinite(parsedValue) && parsedValue > 0) {
+                return parsedValue;
+            }
+
+            return fallbackValue;
+        }
+
+        function getSelectedAirplanePerformance() {
+            const airplane = findAirplane(airplaneSelect.value);
+
+            if (!airplane) {
+                return null;
+            }
+
+            return {
+                climbSpeedKts: parsePositiveNumberOrFallback(climbSpeedInput.value, airplane.climbSpeedKts),
+                climbRateFeetPerMinute: parsePositiveNumberOrFallback(climbRateInput.value, airplane.nominalClimbRateFeetPerMinute),
+                cruiseSpeedKts: parsePositiveNumberOrFallback(cruiseSpeedInput.value, airplane.cruiseSpeedKts),
+                descentSpeedKts: parsePositiveNumberOrFallback(descentSpeedInput.value, airplane.descentSpeedKts),
+                descentRateFeetPerMinute: parsePositiveNumberOrFallback(descentRateInput.value, Math.abs(airplane.nominalDescentRateFeetPerMinute))
+            };
+        }
+
         function calculateDistanceMiles(fromAirport, toAirport) {
             const toRad = Math.PI / 180;
             const earthRadiusMiles = 3958.7613;
@@ -440,7 +554,7 @@
             const caption = document.getElementById('altitude-caption');
             const departure = findAirport(document.getElementById('departure-airport').value);
             const arrival = findAirport(document.getElementById('arrival-airport').value);
-            const airplane = findAirplane(airplaneSelect.value);
+            const performance = getSelectedAirplanePerformance();
             const selectedVor = findVor(document.getElementById('vor-station').value);
             const selectedCruiseAltitudeFeetMsl = getSelectedCruiseAltitudeFeetMsl();
 
@@ -469,21 +583,22 @@
             background.setAttribute('fill', '#fafafa');
             profile.appendChild(background);
 
-            if (!departure || !arrival || !airplane || selectedCruiseAltitudeFeetMsl === null) {
+            if (!departure || !arrival || !performance || selectedCruiseAltitudeFeetMsl === null) {
                 caption.textContent = 'Select departure, arrival, airplane, and cruise altitude to display altitude profile.';
                 return;
             }
 
             const totalDistanceMiles = calculateDistanceMiles(departure, arrival);
-            const climbRate = airplane.nominalClimbRateFeetPerMinute;
-            const descentRate = Math.abs(airplane.nominalDescentRateFeetPerMinute);
+            const climbRate = performance.climbRateFeetPerMinute;
+            const descentRate = performance.descentRateFeetPerMinute;
             const requestedCruiseAltitude = Math.max(
                 selectedCruiseAltitudeFeetMsl,
                 departure.altitudeFeetMsl,
                 arrival.altitudeFeetMsl
             );
-            const climbSpeedMph = airplane.climbSpeedKts * 1.15078;
-            const descentSpeedMph = airplane.descentSpeedKts * 1.15078;
+            const climbSpeedMph = performance.climbSpeedKts * 1.15078;
+            const cruiseSpeedMph = performance.cruiseSpeedKts * 1.15078;
+            const descentSpeedMph = performance.descentSpeedKts * 1.15078;
             const climbFeetPerMile = climbRate > 0 && climbSpeedMph > 0
                 ? (climbRate * 60) / climbSpeedMph
                 : 0;
@@ -518,6 +633,12 @@
                     descentStartMiles = totalDistanceMiles;
                 }
             }
+
+            const cruiseDistanceMiles = Math.max(0, descentStartMiles - climbEndMiles);
+            const climbMinutes = climbSpeedMph > 0 ? (climbEndMiles / climbSpeedMph) * 60 : 0;
+            const cruiseMinutes = cruiseSpeedMph > 0 ? (cruiseDistanceMiles / cruiseSpeedMph) * 60 : 0;
+            const descentMinutes = descentSpeedMph > 0 ? ((totalDistanceMiles - descentStartMiles) / descentSpeedMph) * 60 : 0;
+            const estimatedTotalMinutes = climbMinutes + cruiseMinutes + descentMinutes;
 
             const minAltitude = Math.min(departure.altitudeFeetMsl, arrival.altitudeFeetMsl);
             const maxAltitude = Math.max(peakAltitude, departure.altitudeFeetMsl, arrival.altitudeFeetMsl);
@@ -766,7 +887,7 @@
             const profilePhaseText = hasCruiseSegment
                 ? `Cruise ${Math.round(peakAltitude)} ft MSL.`
                 : `Peak ${Math.round(peakAltitude)} ft MSL; requested cruise altitude not reached.`;
-            caption.textContent = `${departure.code} to ${arrival.code}: ${totalDistanceMiles.toFixed(1)} miles. ${profilePhaseText}`;
+            caption.textContent = `${departure.code} to ${arrival.code}: ${totalDistanceMiles.toFixed(1)} miles. ${profilePhaseText} Estimated ${estimatedTotalMinutes.toFixed(1)} min.`;
         }
 
         function renderSchematicMap() {
