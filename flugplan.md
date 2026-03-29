@@ -4,11 +4,13 @@
 A single-page flight planning web application built with HTML, small inline CSS, and vanilla JavaScript. No frameworks or build tools required.
 
 ## Current Features
-- Single-screen layout with departure and arrival panels
+- Single-screen layout with departure, arrival, and airplane panels
 - Airport input field in each panel with dropdown suggestions while typing and keyboard selection
 - Runway select field in each panel
+- Airplane select field in its own panel
 - Plain JavaScript data section
 - Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, and altitude in feet MSL
+- Airplane data with one entry (Cessna 172P Skyhawk) including climb, cruise, and descent performance
 - VOR station data (ZURICH EAST, KLOTEN, WILLISAU) with code, frequency, latitude, and longitude
 
 ## Technology Stack
@@ -33,8 +35,9 @@ flugplan/
 - Keep markdown updated whenever HTML, requirements, or instructions change
 
 ## UI Notes
-- Departure and arrival are separate panels on one page
+- Departure, arrival, and airplane are separate panels on one page
 - Runway selects are present but not populated with airport-specific runway data yet
+- Airplane select is populated from the airplane data array
 - Airport inputs use custom suggestion lists generated from the airport data
 - Each airport suggestion is a single combined entry in the form `ICAO - Name`
 - Airport suggestions support typing either ICAO code or human-readable name
@@ -58,6 +61,14 @@ flugplan/
 ### Runway
 - **Runway Number** - Identifier (e.g., "25L", "09R")
 - **Parent Airport** - Reference to Airport entity
+
+### Airplane
+- **Name** - Aircraft name (e.g., "Cessna 172P Skyhawk")
+- **Nominal Climb Rate** - Feet per minute (e.g., `500`)
+- **Climb Speed** - Knots (e.g., `75`)
+- **Cruise Speed** - Knots (e.g., `105`)
+- **Nominal Descent Rate** - Feet per minute, negative for descent (e.g., `-500`)
+- **Descent Speed** - Knots (e.g., `105`)
 
 ### VOR (VHF Omnidirectional Range)
 - **Name** - Station name (e.g., "Kennedy VOR")

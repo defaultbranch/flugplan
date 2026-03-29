@@ -99,6 +99,17 @@
                 </select>
             </div>
         </section>
+
+        <section class="panel">
+            <h2>Airplane</h2>
+
+            <div class="field">
+                <label for="airplane">Airplane</label>
+                <select id="airplane" name="airplane">
+                    <option value="">Select airplane</option>
+                </select>
+            </div>
+        </section>
     </div>
 
     <script>
@@ -107,6 +118,26 @@
             { code: 'LSZF', name: 'Birrfeld', latitude: 47.443600, longitude: 8.233610, altitudeFeetMsl: 1300 },
             { code: 'LSZM', name: 'Mollis Airfield', latitude: 47.078353, longitude: 9.064662, altitudeFeetMsl: 1485 }
         ];
+
+        const airplanes = [
+            {
+                name: 'Cessna 172P Skyhawk',
+                nominalClimbRateFeetPerMinute: 500,
+                climbSpeedKts: 75,
+                cruiseSpeedKts: 105,
+                nominalDescentRateFeetPerMinute: -500,
+                descentSpeedKts: 105
+            }
+        ];
+
+        const airplaneSelect = document.getElementById('airplane');
+
+        airplanes.forEach((airplane) => {
+            const option = document.createElement('option');
+            option.value = airplane.name;
+            option.textContent = airplane.name;
+            airplaneSelect.appendChild(option);
+        });
 
         function formatAirport(airport) {
             return `${airport.code} - ${airport.name}`;
