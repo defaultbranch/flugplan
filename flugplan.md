@@ -48,7 +48,8 @@ flugplan/
 - Airport data lives in `airports.js`; airplane data lives in `airplanes.js`; VOR data lives in `vors.js`; styles live in `flugplan.css`; the application logic remains embedded in `flugplan.html`
 - Layout is intentionally minimal; avoid adding behavior unless explicitly requested
 - CSS is loaded from `flugplan.css`
-- JavaScript is embedded in `<script>` tag at bottom
+- `flugplan.html` loads `airports.js`, `airplanes.js`, and `vors.js` before the inline application script
+- Main UI/rendering JavaScript remains embedded in the bottom `<script>` tag
 - Browser localStorage is used to remember current control values across page reloads
 - Keep markdown updated whenever HTML, requirements, or instructions change
 
@@ -134,10 +135,17 @@ Implementation note: airplane records plus airplane lookup helper are declared i
 
 Implementation note: VOR records plus VOR formatting and lookup helpers are declared in `vors.js` with JSDoc typing.
 
+Current helper ownership:
+- `airports.js`: `formatAirport`, `formatRunway`, `findAirport`
+- `airplanes.js`: `findAirplane`
+- `vors.js`: `formatVor`, `findVor`
+
 Current runway source: runway identifiers and available heading data for LSMD, LSZF, and LSZM were taken from OurAirports runways data.
 
 ## Next Session Handoff
 - Keep markdown updated whenever HTML, requirements, or instructions change.
+- Data and lookup/format helpers are now split into dedicated files (`airports.js`, `airplanes.js`, `vors.js`); main UI/rendering logic is still inline in `flugplan.html`.
+- Script load order in `flugplan.html` matters: `airports.js`, `airplanes.js`, and `vors.js` must load before the inline app script.
 - Current outputs: Map and Altitude Profile are schematic SVGs; the map updates from selected departure/arrival airports and optional VOR, and the altitude profile updates from selected departure/arrival airports plus current airplane performance inputs.
 - The altitude profile uses the current cruise altitude input as its target ceiling when reachable; otherwise it peaks where fixed-rate climb transitions directly into fixed-rate descent.
 - The altitude profile x-axis shows total route distance, selected-VOR distances at key flight phase points, and optional climb/descent distance labels when spacing allows.
