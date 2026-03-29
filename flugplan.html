@@ -299,21 +299,6 @@
             return `${runway.name} (${runway.orientationDeg} deg)`;
         }
 
-        function findVor(value) {
-            const normalized = value.trim().toLowerCase();
-
-            if (!normalized) {
-                return null;
-            }
-
-            return vors.find((vor) => {
-                const formatted = formatVor(vor).toLowerCase();
-                return vor.code.toLowerCase() === normalized
-                    || vor.name.toLowerCase() === normalized
-                    || formatted === normalized;
-            }) || null;
-        }
-
         function findAirplane(value) {
             return airplanes.find((airplane) => airplane.name === value) || null;
         }

@@ -36,3 +36,29 @@ const vors = [
     { name: 'KLOTEN', code: 'KLO', frequency: 114.85, latitude: 47.456944, longitude: 8.545556 },
     { name: 'WILLISAU', code: 'WIL', frequency: 116.90, latitude: 47.178056, longitude: 7.905833 }
 ];
+
+/**
+ * Resolve a VOR from free-form user input.
+ *
+ * Matching rules are exact (case-insensitive) against:
+ * - Station code (`ZUE`)
+ * - Human-readable station name (`ZURICH EAST`)
+ * - Combined display value (`ZUE - ZURICH EAST`)
+ *
+ * @param {string} value
+ * @returns {Vor | null}
+ */
+function findVor(value) {
+    const normalized = value.trim().toLowerCase();
+
+    if (!normalized) {
+        return null;
+    }
+
+    return vors.find((vor) => {
+        const formatted = `${vor.code} - ${vor.name}`.toLowerCase();
+        return vor.code.toLowerCase() === normalized
+            || vor.name.toLowerCase() === normalized
+            || formatted === normalized;
+    }) || null;
+}
