@@ -4,10 +4,12 @@
 A single-page flight planning web application built with HTML, small inline CSS, and vanilla JavaScript. No frameworks or build tools required.
 
 ## Current Features
-- Single-screen layout with departure, arrival, and airplane panels
+- Single-screen layout with departure, arrival, and airplane input panels; output panel below
 - Airport input field in each panel with dropdown suggestions while typing and keyboard selection
 - Runway select field in each panel, populated from the selected airport with runway name and orientation
 - Airplane select field in its own panel
+- Output panel with a schematic 2D map (no map tiles)
+- Schematic map shows selected departure and arrival airports
 - Plain JavaScript data section
 - Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, altitude in feet MSL, and runway objects
 - Airplane data with one entry (Cessna 172P Skyhawk) including climb, cruise, and descent performance
@@ -35,9 +37,10 @@ flugplan/
 - Keep markdown updated whenever HTML, requirements, or instructions change
 
 ## UI Notes
-- Departure, arrival, and airplane are separate panels on one page
+- Departure, arrival, and airplane are in the top input row/grid; output is below to avoid cramped layout
 - Runway selects populate automatically when a known airport is selected or typed exactly
 - Airplane select is populated from the airplane data array
+- Output map is schematic SVG based on airport coordinates; no real map tiles are used
 - Airport inputs use custom suggestion lists generated from the airport data
 - Each airport suggestion is a single combined entry in the form `ICAO - Name`
 - Airport suggestions support typing either ICAO code or human-readable name

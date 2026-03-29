@@ -16,6 +16,10 @@
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         }
 
+        .output-panel {
+            margin-top: 16px;
+        }
+
         .panel {
             border: 1px solid #ccc;
             padding: 16px;
@@ -59,6 +63,18 @@
         .suggestion.active,
         .suggestion:hover {
             background: #f2f2f2;
+        }
+
+        .output-map {
+            border: 1px solid #ccc;
+            height: 220px;
+            width: 100%;
+        }
+
+        .map-caption {
+            color: #555;
+            font-size: 0.9rem;
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -111,6 +127,13 @@
             </div>
         </section>
     </div>
+
+    <section class="panel output-panel">
+        <h2>Output</h2>
+
+        <svg id="schematic-map" class="output-map" viewBox="0 0 360 220" aria-label="Schematic route map"></svg>
+        <p class="map-caption" id="map-caption">Select departure and arrival airports to display them on the map.</p>
+    </section>
 
     <script>
         const airports = [
@@ -196,6 +219,99 @@
             }) || null;
         }
 
+        function renderSchematicMap() {
+            const map = document.getElementById('schematic-map');
+            const caption = document.getElementById('map-caption');
+            const departure = findAirport(document.getElementById('departure-airport').value);
+            const arrival = findAirport(document.getElementById('arrival-airport').value);
+
+            while (map.firstChild) {
+                map.removeChild(map.firstChild);
+            }
+
+            const width = 360;
+            const height = 220;
+            const margin = 26;
+            const latitudes = airports.map((airport) => airport.latitude);
+            const longitudes = airports.map((airport) => airport.longitude);
+            const minLat = Math.min(...latitudes);
+            const maxLat = Math.max(...latitudes);
+            const minLon = Math.min(...longitudes);
+            const maxLon = Math.max(...longitudes);
+
+            function createSvgElement(name) {
+                return document.createElementNS('http://www.w3.org/2000/svg', name);
+            }
+
+            function project(airport) {
+                const lonRange = maxLon - minLon || 1;
+                const latRange = maxLat - minLat || 1;
+                const x = margin + ((airport.longitude - minLon) / lonRange) * (width - margin * 2);
+                const y = height - margin - ((airport.latitude - minLat) / latRange) * (height - margin * 2);
+                return { x, y };
+            }
+
+            const background = createSvgElement('rect');
+            background.setAttribute('x', '0');
+            background.setAttribute('y', '0');
+            background.setAttribute('width', String(width));
+            background.setAttribute('height', String(height));
+            background.setAttribute('fill', '#fafafa');
+            map.appendChild(background);
+
+            const selectedAirports = [departure, arrival].filter(Boolean);
+
+            if (selectedAirports.length === 0) {
+                caption.textContent = 'Select departure and arrival airports to display them on the map.';
+                return;
+            }
+
+            if (departure && arrival) {
+                const start = project(departure);
+                const end = project(arrival);
+                const route = createSvgElement('line');
+                route.setAttribute('x1', String(start.x));
+                route.setAttribute('y1', String(start.y));
+                route.setAttribute('x2', String(end.x));
+                route.setAttribute('y2', String(end.y));
+                route.setAttribute('stroke', '#6b7280');
+                route.setAttribute('stroke-width', '2');
+                map.appendChild(route);
+            }
+
+            selectedAirports.forEach((airport, index) => {
+                const point = project(airport);
+                const color = index === 0 && departure === airport ? '#0b7' : '#06c';
+
+                const marker = createSvgElement('circle');
+                marker.setAttribute('cx', String(point.x));
+                marker.setAttribute('cy', String(point.y));
+                marker.setAttribute('r', '5');
+                marker.setAttribute('fill', color);
+                map.appendChild(marker);
+
+                const label = createSvgElement('text');
+                label.setAttribute('x', String(point.x + 8));
+                label.setAttribute('y', String(point.y - 8));
+                label.setAttribute('font-size', '11');
+                label.setAttribute('fill', '#222');
+                label.textContent = airport.code;
+                map.appendChild(label);
+            });
+
+            if (departure && arrival) {
+                caption.textContent = `Departure ${departure.code} and arrival ${arrival.code} shown on schematic map.`;
+                return;
+            }
+
+            if (departure) {
+                caption.textContent = `Departure ${departure.code} shown. Select an arrival airport to complete the route.`;
+                return;
+            }
+
+            caption.textContent = `Arrival ${arrival.code} shown. Select a departure airport to complete the route.`;
+        }
+
         function populateRunwaySelect(airportInputId, runwaySelectId) {
             const airportInput = document.getElementById(airportInputId);
             const runwaySelect = document.getElementById(runwaySelectId);
@@ -254,6 +370,8 @@
                 if (input.id === 'arrival-airport') {
                     populateRunwaySelect('arrival-airport', 'arrival-runway');
                 }
+
+                renderSchematicMap();
             }
 
             function hideSuggestions() {
@@ -306,6 +424,8 @@
                 if (input.id === 'arrival-airport') {
                     populateRunwaySelect('arrival-airport', 'arrival-runway');
                 }
+
+                renderSchematicMap();
             });
 
             input.addEventListener('focus', () => {
@@ -356,6 +476,7 @@
 
         populateRunwaySelect('departure-airport', 'departure-runway');
         populateRunwaySelect('arrival-airport', 'arrival-runway');
+        renderSchematicMap();
 
         // VOR Stations
         const vors = [
