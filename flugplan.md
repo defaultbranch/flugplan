@@ -5,8 +5,8 @@ A single-page flight planning web application built with HTML, small inline CSS,
 
 ## Current Features
 - Single-screen layout with departure, arrival, and airplane input panels; output panels below
-- Airport input field in each panel with dropdown suggestions while typing and keyboard selection
-- Runway select field in each panel, populated from the selected airport with runway name and orientation
+- Airport input fields in departure and arrival panels with dropdown suggestions and keyboard selection
+- Runway select fields in departure and arrival panels, populated from the selected airport with runway name and orientation
 - Airplane select field in its own panel
 - Map panel with a schematic 2D map (no map tiles)
 - Schematic map shows selected departure and arrival airports
@@ -94,6 +94,11 @@ Airport lookup note: airport details can be looked up on OurAirports under `http
 Current airport source: coordinates and field elevations for LSMD, LSZF, and LSZM were taken from OurAirports.
 
 Current runway source: runway identifiers and available heading data for LSMD, LSZF, and LSZM were taken from OurAirports runways data.
+
+## Next Session Handoff
+- Keep markdown updated whenever HTML, requirements, or instructions change.
+- Current outputs: Map and Altitude Profile are schematic SVGs and update from selected departure/arrival airports and airplane.
+- Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
 
 ## Planned Features
 Document future features here as we build them.
