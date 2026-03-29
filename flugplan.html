@@ -114,9 +114,43 @@
 
     <script>
         const airports = [
-            { code: 'LSMD', name: 'Dübendorf', latitude: 47.398602, longitude: 8.648230, altitudeFeetMsl: 1470 },
-            { code: 'LSZF', name: 'Birrfeld', latitude: 47.443600, longitude: 8.233610, altitudeFeetMsl: 1300 },
-            { code: 'LSZM', name: 'Mollis Airfield', latitude: 47.078353, longitude: 9.064662, altitudeFeetMsl: 1485 }
+            {
+                code: 'LSMD',
+                name: 'Dübendorf',
+                latitude: 47.398602,
+                longitude: 8.648230,
+                altitudeFeetMsl: 1470,
+                runways: [
+                    { name: '11', orientationDeg: 108 },
+                    { name: '29', orientationDeg: 288 },
+                    { name: '11R', orientationDeg: 108 },
+                    { name: '29L', orientationDeg: 288 }
+                ]
+            },
+            {
+                code: 'LSZF',
+                name: 'Birrfeld',
+                latitude: 47.443600,
+                longitude: 8.233610,
+                altitudeFeetMsl: 1300,
+                runways: [
+                    { name: '08L', orientationDeg: 80 },
+                    { name: '26R', orientationDeg: 260 },
+                    { name: '08R', orientationDeg: 80 },
+                    { name: '26L', orientationDeg: 260 }
+                ]
+            },
+            {
+                code: 'LSZM',
+                name: 'Mollis Airfield',
+                latitude: 47.078353,
+                longitude: 9.064662,
+                altitudeFeetMsl: 1485,
+                runways: [
+                    { name: '01', orientationDeg: 13 },
+                    { name: '19', orientationDeg: 193 }
+                ]
+            }
         ];
 
         const airplanes = [
@@ -141,6 +175,49 @@
 
         function formatAirport(airport) {
             return `${airport.code} - ${airport.name}`;
+        }
+
+        function formatRunway(runway) {
+            return `${runway.name} (${runway.orientationDeg} deg)`;
+        }
+
+        function findAirport(value) {
+            const normalized = value.trim().toLowerCase();
+
+            if (!normalized) {
+                return null;
+            }
+
+            return airports.find((airport) => {
+                const formatted = formatAirport(airport).toLowerCase();
+                return airport.code.toLowerCase() === normalized
+                    || airport.name.toLowerCase() === normalized
+                    || formatted === normalized;
+            }) || null;
+        }
+
+        function populateRunwaySelect(airportInputId, runwaySelectId) {
+            const airportInput = document.getElementById(airportInputId);
+            const runwaySelect = document.getElementById(runwaySelectId);
+            const airport = findAirport(airportInput.value);
+
+            runwaySelect.innerHTML = '';
+
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Select runway';
+            runwaySelect.appendChild(placeholder);
+
+            if (!airport) {
+                return;
+            }
+
+            airport.runways.forEach((runway) => {
+                const option = document.createElement('option');
+                option.value = runway.name;
+                option.textContent = formatRunway(runway);
+                runwaySelect.appendChild(option);
+            });
         }
 
         function setupAirportAutocomplete(inputId, suggestionsId) {
@@ -169,6 +246,14 @@
             function selectAirport(airport) {
                 input.value = formatAirport(airport);
                 hideSuggestions();
+
+                if (input.id === 'departure-airport') {
+                    populateRunwaySelect('departure-airport', 'departure-runway');
+                }
+
+                if (input.id === 'arrival-airport') {
+                    populateRunwaySelect('arrival-airport', 'arrival-runway');
+                }
             }
 
             function hideSuggestions() {
@@ -213,6 +298,14 @@
 
             input.addEventListener('input', () => {
                 showSuggestions(input.value);
+
+                if (input.id === 'departure-airport') {
+                    populateRunwaySelect('departure-airport', 'departure-runway');
+                }
+
+                if (input.id === 'arrival-airport') {
+                    populateRunwaySelect('arrival-airport', 'arrival-runway');
+                }
             });
 
             input.addEventListener('focus', () => {
@@ -260,6 +353,9 @@
 
         setupAirportAutocomplete('departure-airport', 'departure-airport-suggestions');
         setupAirportAutocomplete('arrival-airport', 'arrival-airport-suggestions');
+
+        populateRunwaySelect('departure-airport', 'departure-runway');
+        populateRunwaySelect('arrival-airport', 'arrival-runway');
 
         // VOR Stations
         const vors = [

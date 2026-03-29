@@ -6,10 +6,10 @@ A single-page flight planning web application built with HTML, small inline CSS,
 ## Current Features
 - Single-screen layout with departure, arrival, and airplane panels
 - Airport input field in each panel with dropdown suggestions while typing and keyboard selection
-- Runway select field in each panel
+- Runway select field in each panel, populated from the selected airport with runway name and orientation
 - Airplane select field in its own panel
 - Plain JavaScript data section
-- Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, and altitude in feet MSL
+- Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield) with latitude, longitude, altitude in feet MSL, and runway objects
 - Airplane data with one entry (Cessna 172P Skyhawk) including climb, cruise, and descent performance
 - VOR station data (ZURICH EAST, KLOTEN, WILLISAU) with code, frequency, latitude, and longitude
 
@@ -36,7 +36,7 @@ flugplan/
 
 ## UI Notes
 - Departure, arrival, and airplane are separate panels on one page
-- Runway selects are present but not populated with airport-specific runway data yet
+- Runway selects populate automatically when a known airport is selected or typed exactly
 - Airplane select is populated from the airplane data array
 - Airport inputs use custom suggestion lists generated from the airport data
 - Each airport suggestion is a single combined entry in the form `ICAO - Name`
@@ -59,7 +59,8 @@ flugplan/
 - **Frequency** - Frequency in MHz or Hz (e.g., "118.1")
 
 ### Runway
-- **Runway Number** - Identifier (e.g., "25L", "09R")
+- **Name** - Runway identifier (e.g., "25L", "09R")
+- **Orientation** - Direction in degrees (e.g., `108`)
 - **Parent Airport** - Reference to Airport entity
 
 ### Airplane
@@ -81,6 +82,8 @@ VOR lookup note: coordinates can be looked up on OpenNav under `https://opennav.
 Airport lookup note: airport details can be looked up on OurAirports under `https://ourairports.com/airports/<ICAO>/`.
 
 Current airport source: coordinates and field elevations for LSMD, LSZF, and LSZM were taken from OurAirports.
+
+Current runway source: runway identifiers and available heading data for LSMD, LSZF, and LSZM were taken from OurAirports runways data.
 
 ## Planned Features
 Document future features here as we build them.
