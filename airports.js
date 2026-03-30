@@ -78,6 +78,17 @@ const airports = [
             { name: '01', orientationDeg: 13 },
             { name: '19', orientationDeg: 193 }
         ]
+    },
+    {
+        code: 'LSZC',
+        name: 'Buochs',
+        latitude: 46.974444,
+        longitude: 8.396944,
+        altitudeFeetMsl: 1475,
+        runways: [
+            { name: '08', orientationDeg: 80 },
+            { name: '26', orientationDeg: 260 }
+        ]
     }
 ];
 
