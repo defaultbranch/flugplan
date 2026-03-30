@@ -42,6 +42,10 @@
                     <option value="">Select runway</option>
                 </select>
             </div>
+
+            <div class="panel-action">
+                <button id="swap-airports" type="button">Swap with Departure</button>
+            </div>
         </section>
 
         <section class="panel">
@@ -123,6 +127,9 @@
         const cruiseSpeedInput = document.getElementById('cruise-speed-kts');
         const descentSpeedInput = document.getElementById('descent-speed-kts');
         const descentRateInput = document.getElementById('descent-rate-fpm');
+        const departureAirportInput = document.getElementById('departure-airport');
+        const arrivalAirportInput = document.getElementById('arrival-airport');
+        const swapAirportsButton = document.getElementById('swap-airports');
         const departureRunwaySelect = document.getElementById('departure-runway');
         const arrivalRunwaySelect = document.getElementById('arrival-runway');
         const persistedControlIds = [
@@ -186,8 +193,6 @@
         }
 
         function restorePersistedState() {
-            const departureAirportInput = document.getElementById('departure-airport');
-            const arrivalAirportInput = document.getElementById('arrival-airport');
             const vorStationInput = document.getElementById('vor-station');
             const savedDepartureRunway = loadControlValue('departure-runway') || '';
             const savedArrivalRunway = loadControlValue('arrival-runway') || '';
@@ -226,6 +231,25 @@
             }
 
             persistCurrentControlValues();
+        }
+
+        function swapDepartureAndArrival() {
+            const previousDepartureAirport = departureAirportInput.value;
+            const previousArrivalAirport = arrivalAirportInput.value;
+            const previousDepartureRunway = departureRunwaySelect.value;
+            const previousArrivalRunway = arrivalRunwaySelect.value;
+
+            departureAirportInput.value = previousArrivalAirport;
+            arrivalAirportInput.value = previousDepartureAirport;
+
+            populateRunwaySelect('departure-airport', 'departure-runway', previousArrivalRunway);
+            populateRunwaySelect('arrival-airport', 'arrival-runway', previousDepartureRunway);
+
+            saveControlValue('departure-airport', departureAirportInput.value);
+            saveControlValue('arrival-airport', arrivalAirportInput.value);
+
+            renderSchematicMap();
+            renderAltitudeProfile();
         }
 
         function applySelectedAirplanePerformance() {
@@ -285,6 +309,10 @@
 
         arrivalRunwaySelect.addEventListener('change', () => {
             saveControlValue('arrival-runway', arrivalRunwaySelect.value);
+        });
+
+        swapAirportsButton.addEventListener('click', () => {
+            swapDepartureAndArrival();
         });
 
         function getSelectedCruiseAltitudeFeetMsl() {

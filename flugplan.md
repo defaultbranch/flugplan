@@ -7,6 +7,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Single-screen layout with departure, arrival, airplane, and VOR input panels; output panels below
 - Airport input fields in departure and arrival panels with dropdown suggestions and keyboard selection
 - Runway select fields in departure and arrival panels, populated from the selected airport with runway name and orientation
+- Arrival panel includes a swap button to exchange departure and arrival airports/runways
 - Airplane panel with airplane select field and editable performance inputs (cruise altitude, climb speed/rate, cruise speed, descent speed/rate)
 - VOR station input field with dropdown suggestions and keyboard selection
 - Selected and typed values in airport, runway, airplane, airplane performance inputs, and VOR controls are persisted in browser localStorage and restored on reload
@@ -58,6 +59,7 @@ flugplan/
 - Input rows use a compact one-line layout with label and control aligned horizontally
 - Labels are configured not to wrap in the one-line field layout
 - Runway selects populate automatically when a known airport is selected or typed exactly
+- Arrival panel swap button exchanges departure/arrival airport and runway selections, then refreshes map/profile output
 - Airplane select is populated from the airplane data array
 - Selecting an airplane overwrites airplane performance inputs with that airplane's nominal values, but each value can still be edited manually
 - VOR input uses a custom suggestion list generated from the VOR data
@@ -154,6 +156,7 @@ Current runway source: runway identifiers and available heading data for LSMD, L
 - The altitude profile caption also shows estimated total flight time in minutes.
 - Altitude-profile distances are based on airport and navaid reference-point coordinates, not the aircraft's exact parking/runway position.
 - Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
+- Arrival panel includes a `Swap with Departure` button that swaps both airport text values and runway selections.
 - VOR input resolves exact known station values (`CODE`, full name, `CODE - Name`, or frequency) for selection/highlighting.
 - Current control values persist in browser localStorage and are restored during initialization when valid, including airplane performance inputs.
 
