@@ -89,6 +89,21 @@ const airports = [
             { name: '08', orientationDeg: 80 },
             { name: '26', orientationDeg: 260 }
         ]
+    },
+    {
+        code: 'LSZH',
+        name: 'Kloten Airport',
+        latitude: 47.458056,
+        longitude: 8.548056,
+        altitudeFeetMsl: 1417,
+        runways: [
+            { name: '10', orientationDeg:  94 },
+            { name: '28', orientationDeg: 274 },
+            { name: '14', orientationDeg: 135 },
+            { name: '32', orientationDeg: 315 },
+            { name: '16', orientationDeg: 153 },
+            { name: '34', orientationDeg: 333 }
+        ]
     }
 ];
 

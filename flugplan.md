@@ -21,7 +21,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Altitude chart x-axis shows selected-VOR distance annotations at takeoff, climb-end, descent-start, and landing points, and can also show climb/descent distance labels when space permits
 - Altitude profile caption includes an estimated total flight time derived from climb, cruise, and descent speeds/distances
 - Plain JavaScript data sections, with airport, airplane, and VOR data loaded from dedicated script files
-- Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield, LSZC Buochs) with latitude, longitude, altitude in feet MSL, and runway objects
+- Airport data (LSMD Dübendorf, LSZF Birrfeld, LSZM Mollis Airfield, LSZC Buochs, LSZH Kloten Airport) with latitude, longitude, altitude in feet MSL, and runway objects
 - Airplane data with one entry (Cessna 172P Skyhawk) including climb, cruise, and descent performance
 - VOR station data (ZURICH EAST, KLOTEN, WILLISAU) with code, frequency, latitude, and longitude
 
@@ -127,7 +127,7 @@ VOR lookup note: coordinates can be looked up on OpenNav under `https://opennav.
 
 Airport lookup note: airport details can be looked up on OurAirports under `https://ourairports.com/airports/<ICAO>/`.
 
-Current airport source: coordinates and field elevations for LSMD, LSZF, LSZM, and LSZC were taken from OurAirports.
+Current airport source: coordinates and field elevations for LSMD, LSZF, LSZM, LSZC, and LSZH were taken from OurAirports.
 
 Implementation note: airport records plus airport/runway formatting and airport lookup helpers are declared in `airports.js` with JSDoc typing.
 
@@ -140,7 +140,7 @@ Current helper ownership:
 - `airplanes.js`: `findAirplane`
 - `vors.js`: `formatVor`, `findVor`
 
-Current runway source: runway identifiers and available heading data for LSMD, LSZF, LSZM, and LSZC were taken from OurAirports runways data.
+Current runway source: runway identifiers and available heading data for LSMD, LSZF, LSZM, LSZC, and LSZH were taken from OurAirports runways data.
 
 ## Next Session Handoff
 - Keep markdown updated whenever HTML, requirements, or instructions change.
