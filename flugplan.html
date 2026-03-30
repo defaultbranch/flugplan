@@ -339,6 +339,10 @@
             return earthRadiusMiles * c;
         }
 
+        function milesToNauticalMiles(miles) {
+            return miles / 1.15078;
+        }
+
         function calculateInitialHeadingDegrees(fromAirport, toAirport) {
             const toRad = Math.PI / 180;
             const toDeg = 180 / Math.PI;
@@ -600,27 +604,27 @@
 
             const routeDistanceLabels = [
                 {
-                    text: '0 mi',
+                    text: '0 nm',
                     x: xToPixel(0),
                     y: height - 26,
                     anchor: 'start'
                 },
                 {
-                    text: `Climb ${climbEndMiles.toFixed(1)} mi`,
+                    text: `Climb ${milesToNauticalMiles(climbEndMiles).toFixed(1)} nm`,
                     x: xToPixel(climbEndMiles),
                     y: height - 26,
                     anchor: 'middle',
                     fill: '#1b9e77'
                 },
                 {
-                    text: `Descent ${descentStartMiles.toFixed(1)} mi`,
+                    text: `Descent ${milesToNauticalMiles(descentStartMiles).toFixed(1)} nm`,
                     x: xToPixel(descentStartMiles),
                     y: height - 26,
                     anchor: 'middle',
                     fill: '#d95f02'
                 },
                 {
-                    text: `${totalDistanceMiles.toFixed(1)} mi`,
+                    text: `${milesToNauticalMiles(totalDistanceMiles).toFixed(1)} nm`,
                     x: xToPixel(totalDistanceMiles),
                     y: height - 26,
                     anchor: 'end'
@@ -666,10 +670,11 @@
                     .forEach((phaseMiles) => {
                         const routePoint = interpolateRoutePoint(phaseMiles);
                         const vorDistanceMiles = calculateDistanceMiles(routePoint, selectedVor);
+                        const vorDistanceNauticalMiles = milesToNauticalMiles(vorDistanceMiles);
                         const nearStart = phaseMiles <= totalDistanceMiles * 0.05;
                         const nearEnd = phaseMiles >= totalDistanceMiles * 0.95;
                         const labelData = {
-                            text: `${vorDistanceMiles.toFixed(1)} mi`,
+                            text: `${vorDistanceNauticalMiles.toFixed(1)} nm`,
                             x: xToPixel(phaseMiles),
                             y: height - 10,
                             anchor: nearStart ? 'start' : (nearEnd ? 'end' : 'middle'),
@@ -696,7 +701,7 @@
             const profilePhaseText = hasCruiseSegment
                 ? `Cruise ${Math.round(peakAltitude)} ft MSL.`
                 : `Peak ${Math.round(peakAltitude)} ft MSL; requested cruise altitude not reached.`;
-            caption.textContent = `${departure.code} to ${arrival.code}: ${totalDistanceMiles.toFixed(1)} miles. ${profilePhaseText} Estimated ${estimatedTotalMinutes.toFixed(1)} min.`;
+            caption.textContent = `${departure.code} to ${arrival.code}: ${milesToNauticalMiles(totalDistanceMiles).toFixed(1)} nm. ${profilePhaseText} Estimated ${estimatedTotalMinutes.toFixed(1)} min. Distances use airport and navaid reference points.`;
         }
 
         function renderSchematicMap() {
@@ -1044,7 +1049,8 @@
             formatItem: formatVor,
             matchesQuery: (vor, normalizedQuery) => {
                 return vor.code.toLowerCase().includes(normalizedQuery)
-                    || vor.name.toLowerCase().includes(normalizedQuery);
+                    || vor.name.toLowerCase().includes(normalizedQuery)
+                    || vor.frequency.toFixed(2).includes(normalizedQuery);
             },
             onSelect: () => {
                 renderSchematicMap();

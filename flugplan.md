@@ -14,7 +14,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Schematic map shows selected departure and arrival airports and can highlight a selected VOR station
 - Map caption shows route heading direction
 - Altitude profile panel with altitude-over-distance chart
-- Altitude chart uses miles on x-axis and feet MSL on y-axis
+- Altitude chart uses nautical miles on x-axis and feet MSL on y-axis
 - Altitude chart ceilings at the selected cruise altitude when reachable, bounded by departure and arrival field elevation when necessary
 - If the requested cruise altitude cannot be reached before descent must begin, the profile peaks at the climb-to-descent transition instead of forcing a cruise segment
 - Altitude chart includes vertical bars for climb end and descent start, with x-axis indicators
@@ -62,7 +62,7 @@ flugplan/
 - Selecting an airplane overwrites airplane performance inputs with that airplane's nominal values, but each value can still be edited manually
 - VOR input uses a custom suggestion list generated from the VOR data
 - Each VOR suggestion is a single combined entry in the form `CODE - Name`
-- VOR suggestions support typing either station code or human-readable name
+- VOR suggestions support typing station code, human-readable name, or frequency
 - Airport, runway, airplane, airplane performance inputs, and VOR control values are restored from localStorage when the page reloads
 - Output map is schematic SVG based on airport and VOR coordinates; no real map tiles are used
 - Altitude profile is a schematic SVG derived from selected airports and the current airplane performance inputs
@@ -129,6 +129,8 @@ Airport lookup note: airport details can be looked up on OurAirports under `http
 
 Current airport source: coordinates and field elevations for LSMD, LSZF, LSZM, LSZC, and LSZH were taken from OurAirports.
 
+Current VOR source: frequencies and navaid coordinates for ZUE, KLO, and WIL were taken from OurAirports navaids data.
+
 Implementation note: airport records plus airport/runway formatting and airport lookup helpers are declared in `airports.js` with JSDoc typing.
 
 Implementation note: airplane records plus airplane lookup helper are declared in `airplanes.js` with JSDoc typing.
@@ -150,8 +152,9 @@ Current runway source: runway identifiers and available heading data for LSMD, L
 - The altitude profile uses the current cruise altitude input as its target ceiling when reachable; otherwise it peaks where fixed-rate climb transitions directly into fixed-rate descent.
 - The altitude profile x-axis shows total route distance, selected-VOR distances at key flight phase points, and optional climb/descent distance labels when spacing allows.
 - The altitude profile caption also shows estimated total flight time in minutes.
+- Altitude-profile distances are based on airport and navaid reference-point coordinates, not the aircraft's exact parking/runway position.
 - Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
-- VOR input resolves exact known station values (`CODE`, full name, or `CODE - Name`) for selection/highlighting.
+- VOR input resolves exact known station values (`CODE`, full name, `CODE - Name`, or frequency) for selection/highlighting.
 - Current control values persist in browser localStorage and are restored during initialization when valid, including airplane performance inputs.
 
 ## Planned Features

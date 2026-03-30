@@ -32,9 +32,9 @@
  * @type {Vor[]}
  */
 const vors = [
-    { name: 'ZURICH EAST', code: 'ZUE', frequency: 110.05, latitude: 47.591944, longitude: 8.8175 },
-    { name: 'KLOTEN', code: 'KLO', frequency: 114.85, latitude: 47.456944, longitude: 8.545556 },
-    { name: 'WILLISAU', code: 'WIL', frequency: 116.90, latitude: 47.178056, longitude: 7.905833 }
+    { name: 'ZURICH EAST', code: 'ZUE', frequency: 110.05, latitude: 47.592201, longitude: 8.817670 },
+    { name: 'KLOTEN', code: 'KLO', frequency: 114.85, latitude: 47.457100, longitude: 8.545580 },
+    { name: 'WILLISAU', code: 'WIL', frequency: 116.90, latitude: 47.178299, longitude: 7.905920 }
 ];
 
 /**
@@ -54,12 +54,14 @@ function formatVor(vor) {
  * - Station code (`ZUE`)
  * - Human-readable station name (`ZURICH EAST`)
  * - Combined display value (`ZUE - ZURICH EAST`)
+ * - Frequency (`110.05`)
  *
  * @param {string} value
  * @returns {Vor | null}
  */
 function findVor(value) {
     const normalized = value.trim().toLowerCase();
+    const numericValue = Number.parseFloat(value);
 
     if (!normalized) {
         return null;
@@ -69,6 +71,7 @@ function findVor(value) {
         const formatted = formatVor(vor).toLowerCase();
         return vor.code.toLowerCase() === normalized
             || vor.name.toLowerCase() === normalized
-            || formatted === normalized;
+            || formatted === normalized
+            || (Number.isFinite(numericValue) && Math.abs(vor.frequency - numericValue) < 0.0005);
     }) || null;
 }
