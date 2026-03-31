@@ -104,6 +104,17 @@ const airports = [
             { name: '16', orientationDeg: 153 },
             { name: '34', orientationDeg: 333 }
         ]
+    },
+    {
+        code: 'LSZE',
+        name: 'Bad Ragaz Airfield',
+        latitude: 47.014904,
+        longitude: 9.481815,
+        altitudeFeetMsl: 1617,
+        runways: [
+            { name: '12', orientationDeg: 120 },
+            { name: '30', orientationDeg: 300 }
+        ]
     }
 ];
 
