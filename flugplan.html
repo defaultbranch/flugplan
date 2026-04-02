@@ -305,10 +305,12 @@
 
         departureRunwaySelect.addEventListener('change', () => {
             saveControlValue('departure-runway', departureRunwaySelect.value);
+            renderAltitudeProfile();
         });
 
         arrivalRunwaySelect.addEventListener('change', () => {
             saveControlValue('arrival-runway', arrivalRunwaySelect.value);
+            renderAltitudeProfile();
         });
 
         swapAirportsButton.addEventListener('click', () => {
@@ -390,11 +392,37 @@
             return directions[index];
         }
 
+        function findRunwayByName(airport, runwayName) {
+            if (!airport || !runwayName) {
+                return null;
+            }
+
+            return airport.runways.find((runway) => runway.name === runwayName) || null;
+        }
+
+        function getAltitudeProfileRoutePoint(airport, runwayName) {
+            const runway = findRunwayByName(airport, runwayName);
+
+            if (runway && runway.threshold) {
+                return {
+                    latitude: runway.threshold.latitude,
+                    longitude: runway.threshold.longitude
+                };
+            }
+
+            return {
+                latitude: airport.latitude,
+                longitude: airport.longitude
+            };
+        }
+
         function renderAltitudeProfile() {
             const profile = document.getElementById('altitude-profile');
             const caption = document.getElementById('altitude-caption');
             const departure = findAirport(document.getElementById('departure-airport').value);
             const arrival = findAirport(document.getElementById('arrival-airport').value);
+            const departureRunwayName = departureRunwaySelect.value;
+            const arrivalRunwayName = arrivalRunwaySelect.value;
             const performance = getSelectedAirplanePerformance();
             const selectedVor = findVor(document.getElementById('vor-station').value);
             const selectedCruiseAltitudeFeetMsl = getSelectedCruiseAltitudeFeetMsl();
@@ -429,7 +457,9 @@
                 return;
             }
 
-            const totalDistanceMiles = calculateDistanceMiles(departure, arrival);
+            const departureRoutePoint = getAltitudeProfileRoutePoint(departure, departureRunwayName);
+            const arrivalRoutePoint = getAltitudeProfileRoutePoint(arrival, arrivalRunwayName);
+            const totalDistanceMiles = calculateDistanceMiles(departureRoutePoint, arrivalRoutePoint);
             const climbRate = performance.climbRateFeetPerMinute;
             const descentRate = performance.descentRateFeetPerMinute;
             const requestedCruiseAltitude = Math.max(
@@ -564,8 +594,8 @@
             function interpolateRoutePoint(distanceMiles) {
                 if (totalDistanceMiles <= 0) {
                     return {
-                        latitude: departure.latitude,
-                        longitude: departure.longitude
+                        latitude: departureRoutePoint.latitude,
+                        longitude: departureRoutePoint.longitude
                     };
                 }
 
@@ -573,8 +603,8 @@
                 const progress = clampedDistance / totalDistanceMiles;
 
                 return {
-                    latitude: departure.latitude + (arrival.latitude - departure.latitude) * progress,
-                    longitude: departure.longitude + (arrival.longitude - departure.longitude) * progress
+                    latitude: departureRoutePoint.latitude + (arrivalRoutePoint.latitude - departureRoutePoint.latitude) * progress,
+                    longitude: departureRoutePoint.longitude + (arrivalRoutePoint.longitude - departureRoutePoint.longitude) * progress
                 };
             }
 
@@ -729,7 +759,7 @@
             const profilePhaseText = hasCruiseSegment
                 ? `Cruise ${Math.round(peakAltitude)} ft MSL.`
                 : `Peak ${Math.round(peakAltitude)} ft MSL; requested cruise altitude not reached.`;
-            caption.textContent = `${departure.code} to ${arrival.code}: ${milesToNauticalMiles(totalDistanceMiles).toFixed(1)} nm. ${profilePhaseText} Estimated ${estimatedTotalMinutes.toFixed(1)} min. Distances use airport and navaid reference points.`;
+            caption.textContent = `${departure.code} to ${arrival.code}: ${milesToNauticalMiles(totalDistanceMiles).toFixed(1)} nm. ${profilePhaseText} Estimated ${estimatedTotalMinutes.toFixed(1)} min. Distances use runway thresholds when available, otherwise airport and navaid reference points.`;
         }
 
         function renderSchematicMap() {

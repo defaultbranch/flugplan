@@ -13,11 +13,20 @@
  */
 
 /**
+ * @typedef {object} Coordinate
+ * Geographic coordinate in decimal degrees.
+ *
+ * @property {number} latitude
+ * @property {number} longitude
+ */
+
+/**
  * @typedef {object} Runway
  * Runway metadata used to populate the runway select controls.
  *
  * @property {string} name
  * @property {number} orientationDeg
+ * @property {Coordinate} [threshold]
  */
 
 /**
@@ -62,8 +71,22 @@ const airports = [
         longitude: 8.305184,
         altitudeFeetMsl: 1400,
         runways: [
-            { name: '04', orientationDeg: 40 },
-            { name: '22', orientationDeg: 220 }
+            {
+                name: '04',
+                orientationDeg: 40,
+                threshold: {
+                    latitude: 47.98342,
+                    longitude: 8.29494
+                }
+            },
+            {
+                name: '22',
+                orientationDeg: 220,
+                threshold: {
+                    latitude: 47.10132,
+                    longitude: 8.31517
+                }
+            }
         ]
     },
     {

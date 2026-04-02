@@ -7,6 +7,7 @@ A single-page flight planning web application built with HTML, small inline CSS,
 - Single-screen layout with departure, arrival, airplane, and VOR input panels; output panels below
 - Airport input fields in departure and arrival panels with dropdown suggestions and keyboard selection
 - Runway select fields in departure and arrival panels, populated from the selected airport with runway name and orientation
+- Runway records can include an optional threshold coordinate (`latitude`, `longitude`) used as a route endpoint for altitude profile distance calculations
 - Arrival panel includes a swap button to exchange departure and arrival airports/runways
 - Airplane panel with airplane select field and editable performance inputs (cruise altitude, climb speed/rate, cruise speed, descent speed/rate)
 - VOR station input field with dropdown suggestions and keyboard selection
@@ -94,6 +95,7 @@ flugplan/
 ### Runway
 - **Name** - Runway identifier (e.g., "25L", "09R")
 - **Orientation** - Direction in degrees (e.g., `108`)
+- **Threshold (optional)** - Touch-down threshold coordinate with `latitude` and `longitude` in decimal degrees
 - **Parent Airport** - Reference to Airport entity
 
 ### Airplane
@@ -151,10 +153,11 @@ Current runway source: runway identifiers and available heading data for LSMD, L
 - Data and lookup/format helpers are now split into dedicated files (`airports.js`, `airplanes.js`, `vors.js`); main UI/rendering logic is still inline in `flugplan.html`.
 - Script load order in `flugplan.html` matters: `airports.js`, `airplanes.js`, and `vors.js` must load before the inline app script.
 - Current outputs: Map and Altitude Profile are schematic SVGs; the map updates from selected departure/arrival airports and optional VOR, and the altitude profile updates from selected departure/arrival airports plus current airplane performance inputs.
+- If a selected runway has a threshold coordinate, the altitude profile uses runway-threshold coordinates as route endpoints; otherwise it falls back to airport coordinates.
 - The altitude profile uses the current cruise altitude input as its target ceiling when reachable; otherwise it peaks where fixed-rate climb transitions directly into fixed-rate descent.
 - The altitude profile x-axis shows total route distance, selected-VOR distances at key flight phase points, and optional climb/descent distance labels when spacing allows.
 - The altitude profile caption also shows estimated total flight time in minutes.
-- Altitude-profile distances are based on airport and navaid reference-point coordinates, not the aircraft's exact parking/runway position.
+- Altitude-profile distances are based on selected runway-threshold coordinates when available, otherwise airport and navaid reference-point coordinates (not the aircraft's exact parking position).
 - Runway dropdowns populate only for exact known airport values (`ICAO`, full name, or `ICAO - Name`).
 - Arrival panel includes a `Swap with Departure` button that swaps both airport text values and runway selections.
 - VOR input resolves exact known station values (`CODE`, full name, `CODE - Name`, or frequency) for selection/highlighting.
