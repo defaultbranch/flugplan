@@ -56,6 +56,17 @@ const airports = [
         ]
     },
     {
+        code: 'LSME',
+        name: 'Emmen Air Base',
+        latitude: 47.092444,
+        longitude: 8.305184,
+        altitudeFeetMsl: 1400,
+        runways: [
+            { name: '04', orientationDeg: 40 },
+            { name: '22', orientationDeg: 220 }
+        ]
+    },
+    {
         code: 'LSZF',
         name: 'Birrfeld',
         latitude: 47.443600,
