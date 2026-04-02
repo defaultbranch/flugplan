@@ -132,7 +132,14 @@ const airports = [
         altitudeFeetMsl: 1417,
         runways: [
             { name: '10', orientationDeg:  94 },
-            { name: '28', orientationDeg: 274 },
+            {
+                name: '28',
+                orientationDeg: 274,
+                threshold: {
+                    latitude: 47.45655,
+                    longitude: 8.57154
+                }
+            },
             { name: '14', orientationDeg: 135 },
             { name: '32', orientationDeg: 315 },
             { name: '16', orientationDeg: 153 },
