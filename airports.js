@@ -73,7 +73,7 @@ const airports = [
         runways: [
             {
                 name: '04',
-                orientationDeg: 40,
+                orientationDeg: 37,
                 threshold: {
                     latitude: 47.98342,
                     longitude: 8.29494
@@ -81,7 +81,7 @@ const airports = [
             },
             {
                 name: '22',
-                orientationDeg: 220,
+                orientationDeg: 217,
                 threshold: {
                     latitude: 47.10132,
                     longitude: 8.31517
