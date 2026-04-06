@@ -143,7 +143,14 @@ const airports = [
             { name: '14', orientationDeg: 135 },
             { name: '32', orientationDeg: 315 },
             { name: '16', orientationDeg: 153 },
-            { name: '34', orientationDeg: 333 }
+            {
+                name: '34',
+                orientationDeg: 333,
+                threshold: {
+                    latitude: 47.44928,
+                    longitude: 8.55415
+                }
+            }
         ]
     },
     {
